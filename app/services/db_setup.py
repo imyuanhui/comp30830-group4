@@ -32,7 +32,7 @@ class DBSetUp:
             available_bike_stands INTEGER NOT NULL COMMENT 'Available bike stands',
             last_update DATETIME NOT NULL COMMENT 'Last update time',
             record_time DATETIME NOT NULL COMMENT 'Data record time',
-            PRIMARY KEY (station_id, last_update)
+            PRIMARY KEY (station_id, record_time)
             );
         """
         self.dh.create_table(sql=sql, table_name="bike.availability")
