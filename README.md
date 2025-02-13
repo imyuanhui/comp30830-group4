@@ -16,6 +16,13 @@
 
 ## Configuring Your Credentials
 1. Copy the `example_config.json` file and rename it to `config.json`.
-2. Open the `config.json` file and fill in all the required credentials.
+2. Open the `config.json` file and fill in all required credentials.
 3. If you create a new connection, add the corresponding format in the `example_config.json` file to ensure consistency.
     - ⚠ **Important:** Do not upload your `config.json` file to the GitHub repository to protect sensitive information.
+
+## Integrate bike API and weather API
+1. Configure your credentials by following the steps outlined above.
+2. Navigate to `/app/services`
+3. Execute main.py to:
+   - Create the weather and bike databases and their tables in your MySQL connection.
+   - Fetch data from the Bike API and Weather API and store it in the respective tables.

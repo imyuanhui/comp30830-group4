@@ -20,7 +20,7 @@ class BikeScraper:
         else:
             print("Folder 'bike_data' already exists.")
 
-        formatted_now = str(self.now).replace(" ", "_")
+        formatted_now = self.now.strftime("%Y-%m-%d_%H-%M-%S")
         with open(f"bike_data/bikes_{formatted_now}", "w") as file:
             file.write(self.r.text)
 
