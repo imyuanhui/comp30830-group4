@@ -1,0 +1,17 @@
+{
+    "WeatherAPI": {
+        "weather_api_key": ""
+    },
+    "BikeAPI": {
+        "bike_api_key": "",
+        "bike_name": "dublin",
+        "stations_uri": "https://api.jcdecaux.com/vls/v1/stations"
+    },
+    "Database": {
+        "user": "",
+        "password": "",
+        "port": "",
+        "name": "",
+        "uri": ""
+    }
+}
