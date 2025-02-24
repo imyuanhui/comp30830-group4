@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dublin Bikes</title>
+    <!-- Adjusted paths -->
+    <link rel="stylesheet" href="../static/styles.css">
+    <script src="../static/index.js" defer></script>
+</head>
+<body>
+    <div id="top-bar">
+        <h1>Dublin Bikes</h1>
+        <span id="weather" onclick="showWeatherPrompt()">Weather Information ☁️</span>
+    </div>
+
+    <div id="main-container">
+        <div id="sidebar">
+            <label>Please enter your starting location:</label>
+            <input type="text" id="start-location" placeholder="Enter a starting location...">
+            <label>Please enter your destination:</label>
+            <input type="text" id="destination" placeholder="Enter your destination...">
+            <label>Please input the day and hour you wish to travel:</label>
+
+            <select id="day-select">
+                <option value="" selected disabled>Choose your day</option>
+                <option>Monday</option>
+                <option>Tuesday</option>
+                <option>Wednesday</option>
+                <option>Thursday</option>
+                <option>Friday</option>
+                <option>Saturday</option>
+                <option>Sunday</option>
+            </select>
+
+            <select id="hour-select">
+                <option value="" selected disabled>Choose your time</option>
+                <option>00:00</option>
+                <option>01:00</option>
+                <option>02:00</option>
+                <option>03:00</option>
+                <option>04:00</option>
+                <option>05:00</option>
+                <option>06:00</option>
+                <option>07:00</option>
+                <option>08:00</option>
+                <option>09:00</option>
+                <option>10:00</option>
+                <option>11:00</option>
+                <option>12:00</option>
+                <option>13:00</option>
+                <option>14:00</option>
+                <option>15:00</option>
+                <option>16:00</option>
+                <option>17:00</option>
+                <option>18:00</option>
+                <option>19:00</option>
+                <option>20:00</option>
+                <option>21:00</option>
+                <option>22:00</option>
+                <option>23:00</option>
+            </select>
+            <button onclick="planJourney()">Plan Your Journey</button>
+        </div>
+
+        <div id="map-container">
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <footer>
+        <p>Created by Wan-Hua, Prakhar Dayal, and YuanHui </p>
+        <p>UCD Dublin</p>
+    </footer>
+
+    <script async src="https://maps.googleapis.com/maps/api/js?key=your_api_key&callback=initMap"></script>
+</body>
+</html>
