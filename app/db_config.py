@@ -9,7 +9,7 @@ load_dotenv()
 USER = os.getenv("DB_USER")
 PASSWORD = os.getenv("DB_PASSWORD")
 PORT = os.getenv("DB_PORT")
-DB = os.getenv("DB_NAME")
+# DB = os.getenv("DB_NAME")
 URI = os.getenv("DB_URI")
 
 # Connect to the database and create the engine
