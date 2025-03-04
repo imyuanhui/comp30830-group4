@@ -1,15 +1,10 @@
-from flask import Blueprint, jsonify, request
-from db_config import get_db
-from sqlalchemy import text
-
-stations_bp = Blueprint("stations", __name__)
-
 # Get filtered stations
 from flask import Blueprint, jsonify, request
 from sqlalchemy import text
 from db_config import get_db
 
 stations_bp = Blueprint("stations", __name__)
+
 
 @stations_bp.route("/stations", methods=["GET"])
 def get_stations():
@@ -90,7 +85,7 @@ def get_stations():
 
         # Fetch details for all stations in a single query (avoiding multiple queries)
         if station_ids:
-            details_query = text(f"""
+            details_query = text("""
                 SELECT station_id, status, last_update, available_bikes, available_bike_stands
                 FROM availability
                 WHERE station_id IN :station_ids
@@ -106,5 +101,3 @@ def get_stations():
                 station['details'] = details_map.get(station['id'], {})
 
     return jsonify(data=data)
-
-

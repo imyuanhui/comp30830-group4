@@ -45,6 +45,9 @@ class DBSetUp:
     def create_weather_current_date(self):
         sql = """
         CREATE TABLE weather.current_data (
+            station_id INTEGER NOT NULL COMMENT 'Station ID (Dublin)',
+            position_lat FLOAT NOT NULL COMMENT 'Station latitude',
+            position_lng FLOAT NOT NULL COMMENT 'Station longitude',
             record_time DATETIME NOT NULL COMMENT 'Data record time',
             record_date DATE NOT NULL COMMENT 'Data record date',
             record_hour INTEGER NOT NULL COMMENT 'Data record hour (0-23)',
@@ -60,7 +63,7 @@ class DBSetUp:
             wind_gust FLOAT NOT NULL DEFAULT 0 COMMENT 'Wind gust (m/s)',
             rain_1h FLOAT NOT NULL DEFAULT 0 COMMENT 'Rain volume (mm/h)',
             snow_1h FLOAT NOT NULL DEFAULT 0 COMMENT 'Snow volume (mm/h)',
-            PRIMARY KEY (record_date, record_hour) COMMENT 'Ensures one record per hour per day'
+            PRIMARY KEY (station_id, record_date, record_hour) COMMENT 'Ensures one record per hour per day'
         );
         """
         self.dh.create_table(sql=sql, table_name="weather.current_data")
@@ -68,6 +71,9 @@ class DBSetUp:
     def create_weather_daily_forecast(self):
         sql = """
         CREATE TABLE weather.daily_forecast (
+            station_id INTEGER NOT NULL COMMENT 'Station ID (Dublin)',
+            position_lat FLOAT NOT NULL COMMENT 'Station latitude',
+            position_lng FLOAT NOT NULL COMMENT 'Station longitude',
             record_time DATETIME NOT NULL COMMENT 'Data record time',
             record_date DATE NOT NULL COMMENT 'Data record date',
             forecast_date DATE NOT NULL COMMENT 'Predicted weather date',
@@ -88,7 +94,7 @@ class DBSetUp:
             wind_gust FLOAT NOT NULL DEFAULT 0 COMMENT 'Wind gust (m/s)',
             rain FLOAT NOT NULL DEFAULT 0 COMMENT 'Rain volume (mm)',
             snow FLOAT NOT NULL DEFAULT 0 COMMENT 'Snow volume (mm)',
-            PRIMARY KEY (record_date, forecast_date)
+            PRIMARY KEY (station_id, record_date, forecast_date)
         );
         """
         self.dh.create_table(sql=sql, table_name="weather.daily_forecast")
@@ -96,6 +102,9 @@ class DBSetUp:
     def create_weather_hourly_forecast(self):
         sql = """
         CREATE TABLE weather.hourly_forecast (
+            station_id INTEGER NOT NULL COMMENT 'Station ID (Dublin)',
+            position_lat FLOAT NOT NULL COMMENT 'Station latitude',
+            position_lng FLOAT NOT NULL COMMENT 'Station longitude',
             record_time DATETIME NOT NULL COMMENT 'Data record time',
             record_hourly_time DATETIME NOT NULL COMMENT 'Data record time rounded to hour',
             hours_ahead INTEGER NOT NULL COMMENT 'Hours ahead from base hour',
@@ -110,7 +119,7 @@ class DBSetUp:
             wind_gust FLOAT NOT NULL DEFAULT 0 COMMENT 'Wind gust (m/s)',
             rain_1h FLOAT NOT NULL DEFAULT 0 COMMENT 'Rain volume (mm/h)',
             snow_1h FLOAT NOT NULL DEFAULT 0 COMMENT 'Snow volume (mm/h)',
-            PRIMARY KEY (record_hourly_time, forecast_hour)
+            PRIMARY KEY (station_id, record_hourly_time, forecast_hour)
         );
         """
         self.dh.create_table(sql=sql, table_name="weather.hourly_forecast")
@@ -129,9 +138,9 @@ class DBSetUp:
         self.dh.create_table(sql=sql, table_name="weather.weather_condition")
 
     def run(self):
-        self.create_bike_database()
-        self.create_bike_station()
-        self.create_bike_availability()
+        # self.create_bike_database()
+        # self.create_bike_station()
+        # self.create_bike_availability()
         self.create_weather_schema()
         self.create_weather_current_date()
         self.create_weather_daily_forecast()

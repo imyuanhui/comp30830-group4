@@ -15,10 +15,10 @@
    ```
 
 ## Configuring Your Credentials
-1. Copy the `example_config.json` file and rename it to `config.json`.
-2. Open the `config.json` file and fill in all required credentials.
-3. If you create a new connection, add the corresponding format in the `example_config.json` file to ensure consistency.
-    - ⚠ **Important:** Do not upload your `config.json` file to the GitHub repository to protect sensitive information.
+1. Copy the `example.env` file and rename it to `.env`.
+2. Open the `.env` file and fill in all required credentials.
+3. If you create a new connection, add the corresponding format in the `example.env` file to ensure consistency.
+    - ⚠ **Important:** Do not upload your `.env` file to the GitHub repository to protect sensitive information.
 
 ## Integrate bike API and weather API
 1. Configure your credentials by following the steps outlined above.
