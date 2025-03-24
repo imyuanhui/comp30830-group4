@@ -138,9 +138,9 @@ class DBSetUp:
         self.dh.create_table(sql=sql, table_name="weather.weather_condition")
 
     def run(self):
-        # self.create_bike_database()
-        # self.create_bike_station()
-        # self.create_bike_availability()
+        self.create_bike_database()
+        self.create_bike_station()
+        self.create_bike_availability()
         self.create_weather_schema()
         self.create_weather_current_date()
         self.create_weather_daily_forecast()

@@ -78,26 +78,44 @@ function getStations(){
         if (!data || !data.data || !Array.isArray(data.data)) {
             throw new Error("Invalid data format: Expected an object with a 'data' array");
         }
-        addMarkers(data.data);
+        for (const station of data.data){
+            fetch("http://127.0.0.1:5000/api/weather/current?lat="+parseFloat(station.lat)+"&lon="+parseFloat(station.lon))
+            .then((response) => response.json())
+            .then((weather) => {
+                if (!weather) {
+                    throw new Error("Invalid data format: Expected an object with a 'data' array");
+                }
+                addMarkers(station,weather);
+            })
+            .catch((error) => {
+                console.error("Error fetching weather data:", error);
+            })
+        }
     })
     .catch((error) => {
         console.error("Error fetching stations data:", error);
     })
 }
 
-function addMarkers(stations){
-    console.log(stations);
+
+function addMarkers(station,weather_data){
+    
     // Create a marker for each station
-    for (const station of stations){
+    
         const marker = new google.maps.Marker({
             position: {
                 lat: parseFloat(station.lat),
                 lng: parseFloat(station.lon),
+
             },
             map: map,
             title: station.name,
             station_number: station.id,
         });
+        
+
+        var iconurl = "http://openweathermap.org/img/w/" +weather_data.weather[0].icon + ".png";
+
 
         const infoWindow = new google.maps.InfoWindow({
             content:`
@@ -107,6 +125,7 @@ function addMarkers(stations){
             <p><strong>Available Bikes:</strong> ${station.details.available_bikes || "N/A"}</p>
             <p><strong>Available Bike Stands:</strong> ${station.details.available_bike_stands || "N/A"}</p>
             <p><strong>Last Update Time:</strong> ${station.details.last_update || "N/A"}</p>
+            <p><strong>Current weather:</strong> ${weather_data.weather[0].description || "N/A"}<img src=${iconurl} alt="Weather icon"></img></p>
             </div>
             `,
         });
@@ -116,7 +135,7 @@ function addMarkers(stations){
         });
 
         markers.push(marker);
-    }
+    
 }
 
 function planJourney() {
@@ -128,12 +147,49 @@ function planJourney() {
     alert(`Journey planned from ${start} to ${dest} on ${day} at ${hour}.`);
 }
 
-function showWeatherPrompt() {
-    alert("You clicked on the weather information!");
+function showWeatherPrompt(lat, lon) {
+    fetch("http://127.0.0.1:5000/api/weather/current?lat="+lat+"&lon="+lon)
+    .then((response) => response.json())
+    .then((data) => {
+        if (!data) {
+            throw new Error("Invalid data format: Expected an object with a 'data' array");
+        }
+        var iconurl = "http://openweathermap.org/img/w/" + data.weather[0].icon + ".png"
+        showModal("<p><strong>Current weather:</strong> " + data.weather[0].description + "<img src= "+ iconurl+"> </img></p>");
+    })
+    .catch((error) => {
+        console.error("Error fetching weather data:", error);
+    })
 }
+
 
 window.onload = function () {
     if (typeof google !== "undefined") {
         initMap();
     }
 };
+
+// Function to display the modal
+function showModal(content) {
+    const modal = document.getElementById('myModal');
+    const modalText = document.getElementById('modalText');
+    // Set the content with HTML (HTML is parsed here)
+    modalText.innerHTML = content;
+    // Display the modal
+    modal.style.display = "block";
+    // Close the modal when the user clicks on the <span> element
+    const closeBtn = document.getElementsByClassName('close')[0];
+    closeBtn.onclick = function() {
+      modal.style.display = "none";
+    }
+   
+    // Close the modal if the user clicks anywhere outside of the modal
+    window.onclick = function(event) {
+      if (event.target == modal) {
+        modal.style.display = "none";
+      }
+    }
+  }
+   
+  // Example usage:
+  
