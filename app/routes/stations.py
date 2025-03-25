@@ -2,6 +2,7 @@
 from flask import Blueprint, jsonify, request
 from sqlalchemy import text
 from db_config import get_db
+from services import get_all_stations
 
 stations_bp = Blueprint("stations", __name__)
 
@@ -44,7 +45,26 @@ def get_stations():
     - 200 OK: JSON list of matching bike stations with availability details.
     - 404 Not Found: If no stations match the criteria.
     """
+    stations = get_all_stations()['data']
+    params = request.args
 
+    # Apply filtering dynamically
+    filters = {
+        "id": lambda s, v: str(s["id"]) == v,
+        "name": lambda s, v: v.lower() in s["name"].lower(),
+        "address": lambda s, v: v.lower() in s["address"].lower(),
+        "position_lat": lambda s, v: float(v) - 0.0001 <= s["lat"] <= float(v) + 0.0001,
+        "position_lng": lambda s, v: float(v) - 0.0001 <= s["lon"] <= float(v) + 0.0001
+    }
+
+    for key, filter_func in filters.items():
+        if key in params:
+            stations = [s for s in stations if filter_func(s, params[key])]
+
+    return jsonify(data=stations)
+
+@stations_bp.route("/stations/history", methods=["GET"])
+def get_stations_from_database():
     engine = get_db("bike")
     params = request.args
 
