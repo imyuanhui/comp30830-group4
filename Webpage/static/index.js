@@ -8,7 +8,7 @@ fetch("http://127.0.0.1:5000/api/config")
   .then((response) => response.json())
   .then((config) => {
     const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${config.GOOGLE_MAPS_API_KEY}&callback=initMap`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${config.GOOGLE_MAPS_API_KEY}&libraries=places&callback=initMap`;
     script.async = true;
     document.head.appendChild(script);
   })
@@ -25,6 +25,9 @@ function initMap() {
   });
   getMyLocation(map);
   getStations();
+
+  initAutocomplete("start-location");
+  initAutocomplete("destination");
 }
 
 function getMyLocation(map) {
@@ -242,12 +245,51 @@ function updateMarkers() {
 }
 
 function planJourney() {
-  const start = document.getElementById("start-location").value;
-  const dest = document.getElementById("destination").value;
   const day = document.getElementById("day-select").value;
   const hour = document.getElementById("hour-select").value;
 
-  alert(`Journey planned from ${start} to ${dest} on ${day} at ${hour}.`);
+  if (!startLocation || !destinationLocation) {
+    alert("Please select valid start and destination locations.");
+    return;
+  }
+
+  alert(
+    `Journey planned from ${startLocation.address} to ${destinationLocation.address} on ${day} at ${hour}.`
+  );
+
+  fetch(
+    `http://127.0.0.1:5000/api/plan-journey?start_lat=${startLocation.lat}&start_lon=${startLocation.lon}&dest_lat=${destinationLocation.lat}&dest_lon=${destinationLocation.lon}`
+  )
+    .then((response) => response.json())
+    .then((data) => console.log("Journey Plan Response:", data))
+    .catch((error) => console.error("Error sending journey data:", error));
+}
+
+let startLocation = null;
+let destinationLocation = null;
+
+function initAutocomplete(field) {
+  const input = document.getElementById(field);
+  const autocomplete = new google.maps.places.Autocomplete(input);
+
+  autocomplete.addListener("place_changed", function () {
+    const place = autocomplete.getPlace();
+    if (!place.geometry) {
+      alert("No details available for the selected location.");
+      return;
+    }
+
+    const lat = place.geometry.location.lat();
+    const lon = place.geometry.location.lng();
+    console.log(`Selected ${field}:`, place.formatted_address, lat, lon);
+
+    // Store lat/lng for journey planning
+    if (field === "start-location") {
+      startLocation = { lat, lon, address: place.formatted_address };
+    } else if (field === "destination") {
+      destinationLocation = { lat, lon, address: place.formatted_address };
+    }
+  });
 }
 
 function showWeatherPrompt(lat, lon) {
