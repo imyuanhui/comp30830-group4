@@ -2,8 +2,11 @@ from flask import Blueprint, jsonify, request
 from db_config import get_db
 from sqlalchemy import text
 from services import get_weather_by_coordinate
+import time
+
 
 weather_bp = Blueprint("weather", __name__)
+weather_cache = {}  # { (lat, lon): (timestamp, data) }
 
 # Get current weather by lat and lon
 @weather_bp.route("/weather/current", methods=['GET'])
@@ -53,7 +56,13 @@ def get_current_weather():
     params = request.args
     lat = params.get("lat")
     lon = params.get("lon")
+    key = (lat, lon)
+    now = time.time()
 
+    # Reuse cached result if less than 300 seconds (5 min) old
+    if key in weather_cache and now - weather_cache[key][0] < 300:
+        return jsonify(weather_cache[key][1])
+    
     if not lat or not lon:
         return jsonify({"error": "Missing 'lat' or 'lon' parameters"}), 400
 

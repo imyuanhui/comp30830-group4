@@ -1,6 +1,8 @@
 let map;
 let markers = [];
 let stationsVisible = true;
+let currentMode = "bike"; // <- declare this at the top
+let activeInfoWindow = null;
 
 fetch("http://127.0.0.1:5000/api/config")
     .then(response => response.json())
@@ -78,64 +80,137 @@ function getStations(){
         if (!data || !data.data || !Array.isArray(data.data)) {
             throw new Error("Invalid data format: Expected an object with a 'data' array");
         }
-        for (const station of data.data){
-            fetch("http://127.0.0.1:5000/api/weather/current?lat="+parseFloat(station.lat)+"&lon="+parseFloat(station.lon))
-            .then((response) => response.json())
-            .then((weather) => {
-                if (!weather) {
-                    throw new Error("Invalid data format: Expected an object with a 'data' array");
-                }
-                addMarkers(station,weather);
-            })
-            .catch((error) => {
-                console.error("Error fetching weather data:", error);
-            })
-        }
+        addMarkers(data.data);
     })
     .catch((error) => {
         console.error("Error fetching stations data:", error);
     })
 }
 
-
-function addMarkers(station,weather_data){
-    
+function addMarkers(stations){
+    console.log(stations);
     // Create a marker for each station
-    
+    for (const station of stations){
         const marker = new google.maps.Marker({
             position: {
                 lat: parseFloat(station.lat),
                 lng: parseFloat(station.lon),
-
             },
             map: map,
             title: station.name,
             station_number: station.id,
+            station_data: station,
         });
-        
 
-        var iconurl = "http://openweathermap.org/img/w/" +weather_data.weather[0].icon + ".png";
+        setMarkerStyle(marker);
 
+        const defaultContent = `
+            <div>
+                <h3>${station.name}</h3>
+                <p><strong>Address:</strong> ${station.address || "N/A"}</p>
+                <p><strong>Available Bikes:</strong> ${station.details.available_bikes || "N/A"}</p>
+                <p><strong>Available Bike Stands:</strong> ${station.details.available_bike_stands || "N/A"}</p>
+                <p><strong>Last Update Time:</strong> ${station.details.last_update || "N/A"}</p>
+            </div>
+        `;
 
         const infoWindow = new google.maps.InfoWindow({
-            content:`
-            <div>
-            <h3>${station.name}</h3>
-            <p><strong>Address:</strong> ${station.address || "N/A"}</p>
-            <p><strong>Available Bikes:</strong> ${station.details.available_bikes || "N/A"}</p>
-            <p><strong>Available Bike Stands:</strong> ${station.details.available_bike_stands || "N/A"}</p>
-            <p><strong>Last Update Time:</strong> ${station.details.last_update || "N/A"}</p>
-            <p><strong>Current weather:</strong> ${weather_data.weather[0].description || "N/A"}<img src=${iconurl} alt="Weather icon"></img></p>
-            </div>
-            `,
+            content: defaultContent
         });
 
         marker.addListener("click", () => {
-            infoWindow.open(map, marker);
-        });
+            // Close the currently open InfoWindow, if any
+            if (activeInfoWindow) {
+                activeInfoWindow.close();
+            }
 
-        markers.push(marker);
-    
+            // Fetch data when the marker is clicked
+            fetch("http://127.0.0.1:5000/api/weather/current?lat="+parseFloat(station.lat)+"&lon="+parseFloat(station.lon))
+                .then(response => response.json())
+                .then((weather) => {
+                    const icon_url = "http://openweathermap.org/img/w/" + weather.weather[0].icon + ".png";
+                    const content = `
+                        <div>
+                            <img src="${icon_url}" alt="Weather icon" />
+                            <h3>${station.name}</h3>
+                            <p><strong>Address:</strong> ${station.address || "N/A"}</p>
+                            <p><strong>Available Bikes:</strong> ${station.details.available_bikes || "N/A"}</p>
+                            <p><strong>Available Bike Stands:</strong> ${station.details.available_bike_stands || "N/A"}</p>
+                            <p><strong>Last Update Time:</strong> ${station.details.last_update || "N/A"}</p>
+                        </div>
+                    `;
+                    infoWindow.setContent(content);
+                    infoWindow.open(map, marker);
+
+                    // Set this InfoWindow as the active one
+                    activeInfoWindow = infoWindow;
+                })
+                .catch(error => {
+                    console.error("Error fetching weather info:", error);
+                    // Show default infoWindow content if fetch fails
+                    infoWindow.setContent(defaultContent);
+                    infoWindow.open(map, marker);
+                    activeInfoWindow = infoWindow;
+                });
+            });
+
+            markers.push(marker);
+        }
+    }
+
+function toggleMode() {
+    currentMode = currentMode === "bike" ? "slot" : "bike";
+    const button = document.getElementById("modeToggle");
+    button.textContent = currentMode === "bike" ? "Bike" : "Slot";
+    updateMarkers();
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    const modeSwitch = document.getElementById("modeSwitch");
+    modeSwitch.addEventListener("change", function () {
+        currentMode = this.checked ? "slot" : "bike";
+        updateMarkers();
+    });
+});
+
+function setMarkerStyle(marker) {
+    const station = marker.station_data;
+    let fillOpacity = 0.5;
+    let fillColor = "gray";
+    let label = "0";
+
+    if (currentMode === "bike") {
+        fillColor = "lightgreen";
+        fillOpacity = 0.9;
+        label = station.details.available_bikes.toString();
+    } else {
+        fillColor = "gray";
+        fillOpacity = 0.7;
+        label = station.details.available_bike_stands.toString();
+    }
+
+    marker.setIcon({
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 15,
+        fillColor: fillColor,
+        fillOpacity: fillOpacity,
+        strokeWeight: 1,
+        strokeColor: "white",
+        labelOrigin: new google.maps.Point(0, 0)
+    });    
+
+    marker.setLabel({
+        text: label,
+        fontSize: "14px",
+        fontFamily: "sans-serif",
+        color: "black"
+    });
+}
+
+function updateMarkers() {
+    for (const marker of markers) {
+        setMarkerStyle(marker);
+    }
 }
 
 function planJourney() {
@@ -180,16 +255,13 @@ function showModal(content) {
     // Close the modal when the user clicks on the <span> element
     const closeBtn = document.getElementsByClassName('close')[0];
     closeBtn.onclick = function() {
-      modal.style.display = "none";
+     modal.style.display = "none";
     }
-   
+
     // Close the modal if the user clicks anywhere outside of the modal
     window.onclick = function(event) {
-      if (event.target == modal) {
-        modal.style.display = "none";
-      }
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
     }
-  }
-   
-  // Example usage:
-  
+}
