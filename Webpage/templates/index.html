@@ -21,51 +21,66 @@
 
     <div id="main-container">
         <div id="sidebar">
-            <label>Please enter your starting location:</label>
-            <input type="text" id="start-location" placeholder="Enter a starting location..." autocomplete="off">
-            <label>Please enter your destination:</label>
-            <input type="text" id="destination" placeholder="Enter your destination..." autocomplete="off">
-            <label>Please input the day and hour you wish to travel:</label>
+            <!-- Journey Form Panel -->
+            <div id="journey-form-panel">
+                <label>Please enter your starting location:</label>
+                <input type="text" id="start-location" placeholder="Enter a starting location..." autocomplete="off">
 
-            <select id="day-select">
-                <option value="" selected disabled>Choose your day</option>
-                <option>Monday</option>
-                <option>Tuesday</option>
-                <option>Wednesday</option>
-                <option>Thursday</option>
-                <option>Friday</option>
-                <option>Saturday</option>
-                <option>Sunday</option>
-            </select>
+                <label>Please enter your destination:</label>
+                <input type="text" id="destination" placeholder="Enter your destination..." autocomplete="off">
 
-            <select id="hour-select">
-                <option value="" selected disabled>Choose your time</option>
-                <option>00:00</option>
-                <option>01:00</option>
-                <option>02:00</option>
-                <option>03:00</option>
-                <option>04:00</option>
-                <option>05:00</option>
-                <option>06:00</option>
-                <option>07:00</option>
-                <option>08:00</option>
-                <option>09:00</option>
-                <option>10:00</option>
-                <option>11:00</option>
-                <option>12:00</option>
-                <option>13:00</option>
-                <option>14:00</option>
-                <option>15:00</option>
-                <option>16:00</option>
-                <option>17:00</option>
-                <option>18:00</option>
-                <option>19:00</option>
-                <option>20:00</option>
-                <option>21:00</option>
-                <option>22:00</option>
-                <option>23:00</option>
-            </select>
-            <button onclick="planJourney()">Plan Your Journey</button>
+                <label>Please input the day and hour you wish to travel:</label>
+
+                <select id="day-select">
+                    <option value="" selected disabled>Choose your day</option>
+                    <option>Monday</option>
+                    <option>Tuesday</option>
+                    <option>Wednesday</option>
+                    <option>Thursday</option>
+                    <option>Friday</option>
+                    <option>Saturday</option>
+                    <option>Sunday</option>
+                </select>
+
+                <select id="hour-select">
+                    <option value="" selected disabled>Choose your time</option>
+                    <option>00:00</option>
+                    <option>01:00</option>
+                    <option>02:00</option>
+                    <option>03:00</option>
+                    <option>04:00</option>
+                    <option>05:00</option>
+                    <option>06:00</option>
+                    <option>07:00</option>
+                    <option>08:00</option>
+                    <option>09:00</option>
+                    <option>10:00</option>
+                    <option>11:00</option>
+                    <option>12:00</option>
+                    <option>13:00</option>
+                    <option>14:00</option>
+                    <option>15:00</option>
+                    <option>16:00</option>
+                    <option>17:00</option>
+                    <option>18:00</option>
+                    <option>19:00</option>
+                    <option>20:00</option>
+                    <option>21:00</option>
+                    <option>22:00</option>
+                    <option>23:00</option>
+                </select>
+
+                <button onclick="planJourney()">Plan Your Journey</button>
+            </div>
+
+            <!-- Journey Result Panel (initially hidden) -->
+            <div id="journey-result-panel" style="display: none;">
+                <button onclick="goBackToForm()">← Back</button>
+                <div id="results-content">
+                    <!-- Journey results will be injected here -->
+                </div>
+            </div>
+            
         </div>
 
         <div id="map-container">
