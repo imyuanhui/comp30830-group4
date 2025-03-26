@@ -1,8 +1,8 @@
-# Get filtered stations
 from flask import Blueprint, jsonify, request
 from sqlalchemy import text
 from db_config import get_db
 from services import get_all_stations
+from utils import haversine
 
 stations_bp = Blueprint("stations", __name__)
 
@@ -14,52 +14,116 @@ def get_stations():
     Method: GET
 
     Description:
-    - Fetches bike station data based on provided filters.
-    - Supports filtering by `id`, `name`, `address`, `position_lat`, and `position_lng`.
-    - Handles floating-point precision for `position_lat` and `position_lng`.
-    - Also fetches real-time availability details for each station.
+    - Fetches bike station data and allows filtering based on various parameters.
+    - Supports filtering by `id`, `name`, and `address`.
+    - Supports proximity filtering to return stations within a given maximum distance (km) 
+      from a specified latitude and longitude using the Haversine formula.
+
+    Query Parameters:
+    - `id` (int, optional): Filters stations by their unique ID.
+    - `name` (str, optional): Filters stations whose names contain the given value (case-insensitive).
+    - `address` (str, optional): Filters stations whose addresses contain the given value (case-insensitive).
+    - `position_lat` (float, optional): Latitude of the reference location for proximity filtering.
+    - `position_lng` (float, optional): Longitude of the reference location for proximity filtering.
+    - `maxdist` (float, optional): Maximum distance (in km) within which stations should be returned.
+    
+      - If `position_lat` and `position_lng` are provided along with `maxdist`, only stations within 
+        `maxdist` km of the given coordinates are returned.
+      - If `maxdist` is not provided, exact match filtering on `position_lat` and `position_lng` 
+        (with a small precision tolerance) is applied instead.
 
     Example API Request:
-    GET /api/stations?name=CLARENDON%20ROW&position_lat=53.3409
+    GET /api/stations?position_lat=53.3409&position_lng=-6.2625&maxdist=0.25
 
     Example Response:
     {
         "data": [
             {
-                "id": 1,
-                "name": "CLARENDON ROW",
-                "address": "Clarendon Row",
-                "lat": 53.3409,
-                "lon": -6.2625,
+                "address": "York Street East",
                 "details": {
-                    "status": "OPEN",
-                    "last_update": "2024-02-24 14:30:00",
-                    "available_bikes": 5,
-                    "available_bike_stands": 10
-                }
+                    "available_bike_stands": 23,
+                    "available_bikes": 9,
+                    "last_update": "2025-03-26 18:27:23",
+                    "status": "OPEN"
+                },
+                "id": 52,
+                "lat": 53.338755,
+                "lon": -6.262003,
+                "name": "YORK STREET EAST"
+            },
+            {
+                "address": "Clarendon Row",
+                "details": {
+                    "available_bike_stands": 24,
+                    "available_bikes": 7,
+                    "last_update": "2025-03-26 18:25:19",
+                    "status": "OPEN"
+                },
+                "id": 1,
+                "lat": 53.340927,
+                "lon": -6.262501,
+                "name": "CLARENDON ROW"
+            },
+            {
+                "address": "Exchequer Street",
+                "details": {
+                    "available_bike_stands": 4,
+                    "available_bikes": 20,
+                    "last_update": "2025-03-26 18:25:07",
+                    "status": "OPEN"
+                },
+                "id": 9,
+                "lat": 53.343034,
+                "lon": -6.263578,
+                "name": "EXCHEQUER STREET"
+            },
+            {
+                "address": "York Street West",
+                "details": {
+                    "available_bike_stands": 0,
+                    "available_bikes": 0,
+                    "last_update": "2025-03-26 18:23:07",
+                    "status": "OPEN"
+                },
+                "id": 51,
+                "lat": 53.339334,
+                "lon": -6.264699,
+                "name": "YORK STREET WEST"
             }
         ]
     }
 
     Returns:
-    - 200 OK: JSON list of matching bike stations with availability details.
+    - 200 OK: JSON list of bike stations matching the filters.
+    - 400 Bad Request: If latitude, longitude, or maxdist values are invalid.
     - 404 Not Found: If no stations match the criteria.
     """
     stations = get_all_stations()['data']
     params = request.args
 
-    # Apply filtering dynamically
-    filters = {
-        "id": lambda s, v: str(s["id"]) == v,
-        "name": lambda s, v: v.lower() in s["name"].lower(),
-        "address": lambda s, v: v.lower() in s["address"].lower(),
-        "position_lat": lambda s, v: float(v) - 0.0001 <= s["lat"] <= float(v) + 0.0001,
-        "position_lng": lambda s, v: float(v) - 0.0001 <= s["lon"] <= float(v) + 0.0001
-    }
-
-    for key, filter_func in filters.items():
-        if key in params:
-            stations = [s for s in stations if filter_func(s, params[key])]
+    # Apply proximity filtering if maxdist, lat and lng are provided
+    if "maxdist" in params and "position_lat" in params and "position_lng" in params:
+        try:
+            user_lat = float(params["position_lat"])
+            user_lng = float(params["position_lng"])
+            distance = float(params["maxdist"])
+            stations = [
+                s for s in stations if haversine(user_lat, user_lng, s["lat"], s["lon"]) <= distance
+            ]
+        except ValueError:
+            return jsonify({"error": "Invalid latitude or longitude format"}), 400
+    else:
+    # Apply basic filtering
+        filters = {
+            "id": lambda s, v: str(s["id"]) == v,
+            "name": lambda s, v: v.lower() in s["name"].lower(),
+            "address": lambda s, v: v.lower() in s["address"].lower(),
+            "position_lat": lambda s, v: float(v) - 0.0001 <= s["lat"] <= float(v) + 0.0001,
+            "position_lng": lambda s, v: float(v) - 0.0001 <= s["lon"] <= float(v) + 0.0001
+        }
+        for key, filter_func in filters.items():
+            if key in params:
+                stations = [s for s in stations if filter_func(s, params[key])]
 
     return jsonify(data=stations)
 
