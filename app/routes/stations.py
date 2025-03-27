@@ -196,3 +196,69 @@ def get_station_history_by_id(station_id):
                 })
 
     return jsonify(data=history)
+
+
+@stations_bp.route("/stations/history/demo/<int:station_id>", methods=["GET"])
+def get_station_history_demo_by_id(station_id):
+    """
+    Endpoint:
+        GET /stations/history/hourly/<int:station_id>
+
+    Description:
+    - Retrieve the hourly aggregated bike and bike stand availability for a given station.
+    - Currently this is based on **static demo data** for the date `2025-02-23` only.
+    - In a real implementation, the time window should dynamically cover the past 24 hours.
+
+    Parameters:
+        - `station_id` (int, required): The ID of the bike station.
+
+    Example Request:
+        GET /stations/history/hourly/1
+
+    Example Response:
+    {
+        "data": [
+            {
+                "record_hour": "2025-02-23 14",
+                "station_id": 1,
+                "available_bikes": 10,
+                "available_bike_stands": 5
+            },
+            {
+                "record_hour": "2025-02-23 15",
+                "station_id": 1,
+                "available_bikes": 8,
+                "available_bike_stands": 7
+            },
+            ...
+        ]
+    }
+    """
+    engine = get_db("bike")
+    history = []
+
+    # Note: This query is based on demo data, limited to a fixed 24-hour period (Feb 23, 2025).
+
+    with engine.connect() as conn:
+        result = conn.execute(text("""
+            SELECT 
+                DATE_FORMAT(record_time, '%Y-%m-%d %H') AS record_hour,
+                station_id,
+                ROUND(AVG(available_bikes)) AS avg_available_bikes,
+                ROUND(AVG(available_bike_stands)) AS avg_available_bike_stands
+            FROM bike.availability 
+            WHERE station_id = :station_id
+              AND record_time BETWEEN '2025-02-23 00:00:00' AND '2025-02-23 23:59:59'
+            GROUP BY 1, 2;
+        """), {"station_id": station_id}).fetchall()
+
+        # Assemble result as JSON-serializable dictionary
+        for row in result:
+            history.append({
+                "record_hour": row[0],
+                "station_id": row[1],
+                "available_bikes": row[2],
+                "available_bike_stands": row[3]
+            })
+
+    return jsonify(data=history)

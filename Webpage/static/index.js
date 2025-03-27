@@ -3,6 +3,10 @@ let markers = [];
 let stationsVisible = true;
 let currentMode = "bike"; // <- declare this at the top
 let activeInfoWindow = null;
+let bikeColor = "#5affa2";
+let bikeLabelColor = "black";
+let standColor = "#FFD65A";
+let standLabelColor = "black";
 
 fetch("http://127.0.0.1:5000/api/config")
   .then((response) => response.json())
@@ -110,7 +114,6 @@ function addMarkers(stations) {
     const defaultContent = `
             <div>
                 <h3>${station.name}</h3>
-                <p><strong>Address:</strong> ${station.address || "N/A"}</p>
                 <p><strong>Available Bikes:</strong> ${
                   station.details.available_bikes || "N/A"
                 }</p>
@@ -120,6 +123,12 @@ function addMarkers(stations) {
                 <p><strong>Last Update Time:</strong> ${
                   station.details.last_update || "N/A"
                 }</p>
+                <div id="chart_bike_${
+                  station.id
+                }" style="width: 300px; height: 200px;"></div>
+                <div id="chart_stands_${
+                  station.id
+                }" style="width: 300px; height: 200px;"></div>
             </div>
         `;
 
@@ -128,6 +137,8 @@ function addMarkers(stations) {
     });
 
     marker.addListener("click", () => {
+      marker.setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
+
       // Close the currently open InfoWindow, if any
       if (activeInfoWindow) {
         activeInfoWindow.close();
@@ -156,9 +167,6 @@ function addMarkers(stations) {
                                 <span>${desp} ${temp}℃</span>
                             </div>
                             <h3>${station.name}</h3>
-                            <p><strong>Address:</strong> ${
-                              station.address || "N/A"
-                            }</p>
                             <p><strong>Available Bikes:</strong> ${
                               station.details.available_bikes || "N/A"
                             }</p>
@@ -168,10 +176,16 @@ function addMarkers(stations) {
                             <p><strong>Last Update Time:</strong> ${
                               station.details.last_update || "N/A"
                             }</p>
+                            <div id="chart_bike_${station.id}"></div>
+                            <div id="chart_stand_${station.id}"></div>
                         </div>
                     `;
           infoWindow.setContent(content);
           infoWindow.open(map, marker);
+
+          google.maps.event.addListenerOnce(infoWindow, "domready", () => {
+            drawStationChart(station);
+          });
 
           // Set this InfoWindow as the active one
           activeInfoWindow = infoWindow;
@@ -189,40 +203,113 @@ function addMarkers(stations) {
   }
 }
 
+function drawStationChart(station) {
+  fetch(`http://127.0.0.1:5000/api/stations/history/demo/${station.id}`)
+    .then((response) => response.json())
+    .then((station_past) => {
+      console.log(station_past);
+      // Define container for the chart
+      if (typeof google !== "undefined" && google.charts) {
+        google.charts.load("current", { packages: ["corechart"] });
+        google.charts.setOnLoadCallback(() => {
+          const bikeChartData = new google.visualization.DataTable();
+          const standChartData = new google.visualization.DataTable();
+
+          bikeChartData.addColumn("string", "Hour");
+          bikeChartData.addColumn("number", "Available Bikes");
+
+          standChartData.addColumn("string", "Hour");
+          standChartData.addColumn("number", "Available Bike Stands");
+
+          // Loop through the data
+          for (const row of station_past.data) {
+            bikeChartData.addRow([
+              row.record_hour,
+              Number(row.available_bikes),
+            ]);
+            standChartData.addRow([
+              row.record_hour,
+              Number(row.available_bike_stands),
+            ]);
+          }
+          console.log(bikeChartData);
+
+          const baseChartOptions = {
+            legend: { position: "bottom" },
+            width: 400,
+            height: 200,
+            chartArea: {
+              left: 50,
+              top: 30,
+            },
+          };
+
+          const bikeOptions = {
+            ...baseChartOptions,
+            title: "🚲 24-Hour Bike Availability",
+            colors: [bikeColor],
+          };
+
+          const standOptions = {
+            ...baseChartOptions,
+            title: "📍 24-Hour Stand Availability",
+            colors: [standColor],
+          };
+
+          const bikeChart = new google.visualization.ColumnChart(
+            document.getElementById(`chart_bike_${station.id}`)
+          );
+          bikeChart.draw(bikeChartData, bikeOptions);
+
+          const standChart = new google.visualization.ColumnChart(
+            document.getElementById(`chart_stand_${station.id}`)
+          );
+          standChart.draw(standChartData, standOptions);
+        });
+      } else {
+        console.error("Google Charts is not loaded.");
+      }
+      google.charts.load("current", { packages: ["corechart"] });
+    })
+    .catch((error) => {
+      console.error("Error fetching past 24 hours availability info:", error);
+    });
+}
+
 function toggleMode() {
-  currentMode = currentMode === "bike" ? "slot" : "bike";
+  currentMode = currentMode === "bike" ? "stand" : "bike";
   const button = document.getElementById("modeToggle");
-  button.textContent = currentMode === "bike" ? "Bike" : "Slot";
+  button.textContent = currentMode === "bike" ? "Bike" : "Stand";
   updateMarkers();
 }
 
 document.addEventListener("DOMContentLoaded", function () {
   const modeSwitch = document.getElementById("modeSwitch");
   modeSwitch.addEventListener("change", function () {
-    currentMode = this.checked ? "slot" : "bike";
+    currentMode = this.checked ? "stand" : "bike";
     updateMarkers();
   });
 });
 
-function setMarkerStyle(marker, mode="default") {
+function setMarkerStyle(marker, mode = "default") {
   const station = marker.station_data;
-  let fillOpacity;
   let fillColor;
   let label;
   let strokeColor;
   let strokeWeight;
+  let labelColor;
 
   if (currentMode === "bike") {
-    fillColor = "lightgreen";
-    fillOpacity = 0.9;
+    fillColor = bikeColor;
+    labelColor = bikeLabelColor;
     label = station.details.available_bikes.toString();
   } else {
-    fillColor = "gray";
-    fillOpacity = 0.7;
+    fillColor = standColor;
+    labelColor = standLabelColor;
     label = station.details.available_bike_stands.toString();
   }
 
-  if (mode == "default"){
+  if (mode == "default") {
     strokeColor = "white";
     strokeWeight = 1;
   } else if (mode == "start_station") {
@@ -237,7 +324,7 @@ function setMarkerStyle(marker, mode="default") {
     path: google.maps.SymbolPath.CIRCLE,
     scale: 15,
     fillColor: fillColor,
-    fillOpacity: fillOpacity,
+    fillOpacity: 0.9,
     strokeColor: strokeColor,
     strokeWeight: strokeWeight,
     labelOrigin: new google.maps.Point(0, 0),
@@ -247,7 +334,7 @@ function setMarkerStyle(marker, mode="default") {
     text: label,
     fontSize: "14px",
     fontFamily: "sans-serif",
-    color: "black",
+    color: labelColor,
   });
 }
 
@@ -272,7 +359,11 @@ function planJourney() {
   // mark start location on the map
   addJourneyLocationMarker("start", startLocation.lat, startLocation.lon);
   // mark destination location on the map
-  addJourneyLocationMarker("destination", destinationLocation.lat, destinationLocation.lon);
+  addJourneyLocationMarker(
+    "destination",
+    destinationLocation.lat,
+    destinationLocation.lon
+  );
 
   fetch(
     `http://127.0.0.1:5000/api/plan-journey?start_lat=${startLocation.lat}&start_lon=${startLocation.lon}&dest_lat=${destinationLocation.lat}&dest_lon=${destinationLocation.lon}`
@@ -280,14 +371,20 @@ function planJourney() {
     .then((response) => response.json())
     .then((data) => {
       console.log("Journey Plan Response:", data);
-      showJourneyResultPanel(day, hour, startLocation, destinationLocation, data);
-      highlightJourneyStations(data.start_station.id, data.destination_station.id);
-    }
-  )
-    .catch((error) => console.error("Error sending journey data:", error));
+      showJourneyResultPanel(
+        day,
+        hour,
+        startLocation,
+        destinationLocation,
+        data
+      );
+    })
+    .catch((error) => {
+      console.error("Error sending journey data:", error);
+    });
 }
 
-function highlightJourneyStations(startId, destId){
+function highlightJourneyStations(startId, destId) {
   for (const marker of markers) {
     const stationId = marker.station_data.id;
 
@@ -297,7 +394,6 @@ function highlightJourneyStations(startId, destId){
       setMarkerStyle(marker, "destination_station");
     }
   }
-
 }
 
 function goBackToForm() {
@@ -305,34 +401,42 @@ function goBackToForm() {
   document.getElementById("journey-result-panel").style.display = "none";
 }
 
-function showJourneyResultPanel(day, hour, startLocation, destinationLocation, data) {
+function showJourneyResultPanel(
+  day,
+  hour,
+  startLocation,
+  destinationLocation,
+  data
+) {
+  let resultHtml;
   document.getElementById("journey-form-panel").style.display = "none";
   document.getElementById("journey-result-panel").style.display = "block";
+  if (data.error) {
+    resultHtml = `
+      <p>🚫 No recommended bike stations found. Please try again.</p>
+    `;
+  } else {
+    resultHtml = `
+    <h1>🚲 Journey Plan Summary</h1>
+    <p><strong>From:</strong> ${startLocation.address}</p>
+    <p><strong>To:</strong> ${destinationLocation.address}</p>
+    <p><strong>Day & Time:</strong> ${day}, ${hour}</p>
 
-  const resultHtml = `
-  <h3>🚲 Journey Plan Summary</h3>
-  <p><strong>From:</strong> ${startLocation.address}</p>
-  <p><strong>To:</strong> ${destinationLocation.address}</p>
-  <p><strong>Day & Time:</strong> ${day}, ${hour}</p>
-
-  <h4>📍 Start Station</h4>
-  <p><strong>Name:</strong>${data.start_station.name}</p>
-  <p><strong>Available Bikes:</strong> ${data.start_station.details.available_bikes}</p>
-  <p><strong>Last Updated:</strong> ${data.start_station.details.last_update}</p>
-
-  <h4>🏁 Destination Station</h4>
-  <p><strong>Name:</strong>${data.destination_station.name}</p>
-  <p><strong>Available Stands:</strong> ${data.destination_station.details.available_bikes}</p>
-  <p><strong>Last Updated:</strong> ${data.destination_station.details.last_update}</p>
-
-    <h1>Results<h1>
-    <p><strong>From:</strong> ${data.start_station.name}</p>
-    <p><strong>To:</strong> ${data.destination_station.name}</p>
-    <p><strong>Start Address:</strong> ${data.start_station.address}</p>
-    <p><strong>Destination Address:</strong> ${data.destination_station.address}</p>
+    <h2>📍 Start Station</h2>
+    <p><strong>Name:</strong> ${data.start_station.name}</p>
     <p><strong>Available Bikes:</strong> ${data.start_station.details.available_bikes}</p>
+    <p><strong>Last Updated:</strong> ${data.start_station.details.last_update}</p>
+
+    <h2>🏁 Destination Station</h2>
+    <p><strong>Name:</strong> ${data.destination_station.name}</p>
     <p><strong>Available Stands:</strong> ${data.destination_station.details.available_bike_stands}</p>
+    <p><strong>Last Updated:</strong> ${data.destination_station.details.last_update}</p>
   `;
+    highlightJourneyStations(
+      data.start_station.id,
+      data.destination_station.id
+    );
+  }
   document.getElementById("results-content").innerHTML = resultHtml;
 }
 
@@ -341,30 +445,30 @@ let destinationLocation = null;
 
 function addJourneyLocationMarker(type, lat, lng) {
   const baseIcon = {
-      labelOrigin: new google.maps.Point(20, 12),
-      scaledSize: new google.maps.Size(40, 40),
+    labelOrigin: new google.maps.Point(20, 12),
+    scaledSize: new google.maps.Size(40, 40),
   };
   let iconUrl = "";
   let labelText = "";
 
   if (type === "start") {
-      iconUrl = "http://maps.google.com/mapfiles/ms/icons/green-dot.png";
-      labelText = "S";
+    iconUrl = "http://maps.google.com/mapfiles/ms/icons/green-dot.png";
+    labelText = "S";
   } else if (type === "destination") {
-      iconUrl = "http://maps.google.com/mapfiles/ms/icons/red-dot.png";
-      labelText = "D";
+    iconUrl = "http://maps.google.com/mapfiles/ms/icons/red-dot.png";
+    labelText = "D";
   }
 
   new google.maps.Marker({
-      position: {lat: lat, lng: lng},
-      map: map,
-      icon: { ...baseIcon, url: iconUrl },
-      label: {
-          text: labelText,
-          color: "white",
-          fontWeight: "bold",
-      },
-      title: type.charAt(0).toUpperCase() + type.slice(1),
+    position: { lat: lat, lng: lng },
+    map: map,
+    icon: { ...baseIcon, url: iconUrl },
+    label: {
+      text: labelText,
+      color: "white",
+      fontWeight: "bold",
+    },
+    title: type.charAt(0).toUpperCase() + type.slice(1),
   });
 }
 
