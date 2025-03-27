@@ -3,6 +3,7 @@ from sqlalchemy import text
 from db_config import get_db
 from services import get_all_stations
 from utils import haversine
+from datetime import datetime, timedelta
 
 stations_bp = Blueprint("stations", __name__)
 
@@ -127,61 +128,71 @@ def get_stations():
 
     return jsonify(data=stations)
 
-@stations_bp.route("/stations/history", methods=["GET"])
-def get_stations_from_database():
+@stations_bp.route("/stations/history/<int:station_id>", methods=["GET"])
+def get_station_history_by_id(station_id):
+    """
+    Endpoint:
+        GET /stations/history/<int:station_id>
+
+    API Endpoint: /api/stations/history/<int:station_id>
+    Method: GET
+
+    Description:
+    - Retrieve the historical bike availability and bike stands availability for a given station (identified by station_id) within a specified time range. 
+    - Filters the results by providing a start_time and end_time in the YYYY-MM-DD HH:MM:SS format. 
+    - If no time range is provided, all historical records for the station will be returned.
+    
+    Parameters:
+        - `station_id` (int, required): The unique ID of the bike station.
+        - `start_time` (optional): The start time for filtering the availability history. Should be in the YYYY-MM-DD HH:MM:SS format (e.g., 2025-02-17 13:00:00). If not provided, no lower bound for the time will be applied.
+        - `end_time` (optional): The end time for filtering the availability history. Should be in the YYYY-MM-DD HH:MM:SS format (e.g., 2025-02-17 14:00:00). If not provided, no upper bound for the time will be applied.
+    
+    Example API Request:
+    GET /api/stations/history/1?start_time=2025-02-17 16:00:00&end_time=2025-02-17 16:50:00
+
+    Example Response:
+    {
+        "data": [
+            {
+                "available_bike_stands": 19,
+                "available_bikes": 12,
+                "last_update": "Mon, 17 Feb 2025 16:44:17 GMT"
+            }
+        ]
+    }
+    """
     engine = get_db("bike")
-    params = request.args
+    history = []
 
-    # Build dynamic conditions for filtering
-    conditions = []
-    query_params = {}
+    # Get query parameters for time range
+    start_time_str = request.args.get('start_time')
+    end_time_str = request.args.get('end_time')
 
-    for field, value in params.items():
-        if field in ["position_lat", "position_lng"]:  # Handle floating-point values
-            conditions.append(f"{field} BETWEEN :{field}_min AND :{field}_max")
-            query_params[f"{field}_min"] = float(value) - 0.0001
-            query_params[f"{field}_max"] = float(value) + 0.0001
-        else:
-            conditions.append(f"{field} = :{field}")  # Use named parameters
-            query_params[field] = value
-
-    # Construct main station query
-    base_query = "SELECT id, name, address, position_lat, position_lng FROM station"
-    query = base_query + " WHERE " + " AND ".join(conditions) if conditions else base_query
-
-    data = []
-    station_ids = []  # Collect station IDs for batch fetching of details
-
+    try:
+        start_time = datetime.strptime(start_time_str, "%Y-%m-%d %H:%M:%S") if start_time_str else None
+        end_time = datetime.strptime(end_time_str, "%Y-%m-%d %H:%M:%S") if end_time_str else None
+    except ValueError:
+        return jsonify({"error": "Invalid time format. Expected format: YYYY-MM-DD HH:MM:SS."}), 400
+    
     with engine.connect() as conn:
-        result = conn.execute(text(query), query_params).fetchall()
+        result = conn.execute(text("""
+            SELECT available_bikes, available_bike_stands, last_update 
+            FROM availability 
+            WHERE station_id = :station_id
+            ORDER BY last_update ASC
+        """), {"station_id": station_id}).fetchall()
+
+        history = []
         for row in result:
-            station_id = row[0]
-            station_ids.append(station_id)
+            last_update = row[2]
+            last_update = datetime.strptime(str(last_update), "%Y-%m-%d %H:%M:%S")
 
-            data.append({
-                'id': station_id,
-                'name': row[1],
-                'address': row[2],
-                'lat': row[3],
-                'lon': row[4],
-                'details': {}  # Placeholder for availability details
-            })
+            if (start_time and last_update < start_time) or (end_time and last_update > end_time):
+                continue
+            history.append({
+                    "available_bikes": row[0],
+                    "available_bike_stands": row[1],
+                    "last_update": row[2]
+                })
 
-        # Fetch details for all stations in a single query (avoiding multiple queries)
-        if station_ids:
-            details_query = text("""
-                SELECT station_id, status, last_update, available_bikes, available_bike_stands
-                FROM availability
-                WHERE station_id IN :station_ids
-            """)
-            details_result = conn.execute(details_query, {'station_ids': tuple(station_ids)}).fetchall()
-
-            # Map availability details to stations
-            details_map = {row[0]: {'status': row[1], 'last_update': row[2], 'available_bikes': row[3], 'available_bike_stands': row[4]}
-                           for row in details_result}
-
-            # Attach availability details to each station
-            for station in data:
-                station['details'] = details_map.get(station['id'], {})
-
-    return jsonify(data=data)
+    return jsonify(data=history)
