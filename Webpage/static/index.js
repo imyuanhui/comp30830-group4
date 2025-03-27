@@ -204,11 +204,13 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 
-function setMarkerStyle(marker) {
+function setMarkerStyle(marker, mode="default") {
   const station = marker.station_data;
-  let fillOpacity = 0.5;
-  let fillColor = "gray";
-  let label = "0";
+  let fillOpacity;
+  let fillColor;
+  let label;
+  let strokeColor;
+  let strokeWeight;
 
   if (currentMode === "bike") {
     fillColor = "lightgreen";
@@ -220,13 +222,24 @@ function setMarkerStyle(marker) {
     label = station.details.available_bike_stands.toString();
   }
 
+  if (mode == "default"){
+    strokeColor = "white";
+    strokeWeight = 1;
+  } else if (mode == "start_station") {
+    strokeColor = "green";
+    strokeWeight = 2;
+  } else if (mode == "destination_station") {
+    strokeColor = "red";
+    strokeWeight = 2;
+  }
+
   marker.setIcon({
     path: google.maps.SymbolPath.CIRCLE,
     scale: 15,
     fillColor: fillColor,
     fillOpacity: fillOpacity,
-    strokeWeight: 1,
-    strokeColor: "white",
+    strokeColor: strokeColor,
+    strokeWeight: strokeWeight,
     labelOrigin: new google.maps.Point(0, 0),
   });
 
@@ -256,17 +269,104 @@ function planJourney() {
   alert(
     `Journey planned from ${startLocation.address} to ${destinationLocation.address} on ${day} at ${hour}.`
   );
+  // mark start location on the map
+  addJourneyLocationMarker("start", startLocation.lat, startLocation.lon);
+  // mark destination location on the map
+  addJourneyLocationMarker("destination", destinationLocation.lat, destinationLocation.lon);
 
   fetch(
     `http://127.0.0.1:5000/api/plan-journey?start_lat=${startLocation.lat}&start_lon=${startLocation.lon}&dest_lat=${destinationLocation.lat}&dest_lon=${destinationLocation.lon}`
   )
     .then((response) => response.json())
-    .then((data) => console.log("Journey Plan Response:", data))
+    .then((data) => {
+      console.log("Journey Plan Response:", data);
+      showJourneyResultPanel(day, hour, startLocation, destinationLocation, data);
+      highlightJourneyStations(data.start_station.id, data.destination_station.id);
+    }
+  )
     .catch((error) => console.error("Error sending journey data:", error));
+}
+
+function highlightJourneyStations(startId, destId){
+  for (const marker of markers) {
+    const stationId = marker.station_data.id;
+
+    if (stationId === startId) {
+      setMarkerStyle(marker, "start_station");
+    } else if (stationId === destId) {
+      setMarkerStyle(marker, "destination_station");
+    }
+  }
+
+}
+
+function goBackToForm() {
+  document.getElementById("journey-form-panel").style.display = "block";
+  document.getElementById("journey-result-panel").style.display = "none";
+}
+
+function showJourneyResultPanel(day, hour, startLocation, destinationLocation, data) {
+  document.getElementById("journey-form-panel").style.display = "none";
+  document.getElementById("journey-result-panel").style.display = "block";
+
+  const resultHtml = `
+  <h3>🚲 Journey Plan Summary</h3>
+  <p><strong>From:</strong> ${startLocation.address}</p>
+  <p><strong>To:</strong> ${destinationLocation.address}</p>
+  <p><strong>Day & Time:</strong> ${day}, ${hour}</p>
+
+  <h4>📍 Start Station</h4>
+  <p><strong>Name:</strong>${data.start_station.name}</p>
+  <p><strong>Available Bikes:</strong> ${data.start_station.details.available_bikes}</p>
+  <p><strong>Last Updated:</strong> ${data.start_station.details.last_update}</p>
+
+  <h4>🏁 Destination Station</h4>
+  <p><strong>Name:</strong>${data.destination_station.name}</p>
+  <p><strong>Available Stands:</strong> ${data.destination_station.details.available_bikes}</p>
+  <p><strong>Last Updated:</strong> ${data.destination_station.details.last_update}</p>
+
+    <h1>Results<h1>
+    <p><strong>From:</strong> ${data.start_station.name}</p>
+    <p><strong>To:</strong> ${data.destination_station.name}</p>
+    <p><strong>Start Address:</strong> ${data.start_station.address}</p>
+    <p><strong>Destination Address:</strong> ${data.destination_station.address}</p>
+    <p><strong>Available Bikes:</strong> ${data.start_station.details.available_bikes}</p>
+    <p><strong>Available Stands:</strong> ${data.destination_station.details.available_bike_stands}</p>
+  `;
+  document.getElementById("results-content").innerHTML = resultHtml;
 }
 
 let startLocation = null;
 let destinationLocation = null;
+
+function addJourneyLocationMarker(type, lat, lng) {
+  const baseIcon = {
+      labelOrigin: new google.maps.Point(20, 12),
+      scaledSize: new google.maps.Size(40, 40),
+  };
+  let iconUrl = "";
+  let labelText = "";
+
+  if (type === "start") {
+      iconUrl = "http://maps.google.com/mapfiles/ms/icons/green-dot.png";
+      labelText = "S";
+  } else if (type === "destination") {
+      iconUrl = "http://maps.google.com/mapfiles/ms/icons/red-dot.png";
+      labelText = "D";
+  }
+
+  new google.maps.Marker({
+      position: {lat: lat, lng: lng},
+      map: map,
+      icon: { ...baseIcon, url: iconUrl },
+      label: {
+          text: labelText,
+          color: "white",
+          fontWeight: "bold",
+      },
+      title: type.charAt(0).toUpperCase() + type.slice(1),
+  });
+}
 
 function initAutocomplete(field) {
   const input = document.getElementById(field);
