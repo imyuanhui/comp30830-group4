@@ -1,13 +1,15 @@
-let map;
-let markers = [];
-let stationsVisible = true;
-let currentMode = "bike"; // <- declare this at the top
-let activeInfoWindow = null;
-let bikeColor = "#5affa2";
-let bikeLabelColor = "black";
-let standColor = "#FFD65A";
-let standLabelColor = "black";
+// Declaring the global variables for map, markers, and UI states
+let map; // Google Map instance
+let markers = []; // Array to store station markers
+let stationsVisible = true; // Toggle visibility of stations
+let currentMode = "bike"; // Default mode: 'bike', can be toggled to 'stand'
+let activeInfoWindow = null; // Track currently open InfoWindow
+let bikeColor = "#5affa2"; // Color for bike availability markers
+let bikeLabelColor = "black"; // Label color for bike markers
+let standColor = "#FFD65A"; // Color for bike stand availability markers
+let standLabelColor = "black"; // Label color for stand markers
 
+// Fetch API key from backend and dynamically load Google Maps API script
 fetch("http://127.0.0.1:5000/api/config")
   .then((response) => response.json())
   .then((config) => {
@@ -18,11 +20,12 @@ fetch("http://127.0.0.1:5000/api/config")
   })
   .catch((error) => console.error("Failed to load API Key:", error));
 
-// Initialize Google Maps
+// Initialize Google Maps and set up event listeners
 function initMap() {
   console.log("Map initialized");
-  const dublin = { lat: 53.3498, lng: -6.2603 };
-  // The map, centered at Dublin
+  const dublin = { lat: 53.3498, lng: -6.2603 }; // Default map center
+  
+  // Create a new Google Map instance
   map = new google.maps.Map(document.getElementById("map"), {
     zoom: 14,
     center: dublin,
@@ -30,10 +33,12 @@ function initMap() {
   getMyLocation(map);
   getStations();
 
+  // Initialize autocomplete for journey planning inputs
   initAutocomplete("start-location");
   initAutocomplete("destination");
 }
 
+// Get and display user's current location
 function getMyLocation(map) {
   // Create a geolocation control button
   const locationButton = document.createElement("button");
@@ -77,6 +82,7 @@ function getMyLocation(map) {
   });
 }
 
+// Fetch station data and add markers to the map
 function getStations() {
   //todo: The availability info should retrieve directly from API response, only the data for chart is from database
   fetch("http://127.0.0.1:5000/api/stations")
@@ -94,6 +100,7 @@ function getStations() {
     });
 }
 
+// Create and configure markers for each station
 function addMarkers(stations) {
   console.log(stations);
   // Create a marker for each station
@@ -111,6 +118,7 @@ function addMarkers(stations) {
 
     setMarkerStyle(marker);
 
+    // Create an InfoWindow with station details
     const defaultContent = `
             <div>
                 <h3>${station.name}</h3>
@@ -136,6 +144,7 @@ function addMarkers(stations) {
       content: defaultContent,
     });
 
+// Add click listener to show station details and weather info
     marker.addListener("click", () => {
       marker.setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
 
@@ -144,7 +153,7 @@ function addMarkers(stations) {
         activeInfoWindow.close();
       }
 
-      // Fetch data when the marker is clicked
+      // Fetch real-time weather data for the station's location
       fetch(
         "http://127.0.0.1:5000/api/weather/current?lat=" +
           parseFloat(station.lat) +
