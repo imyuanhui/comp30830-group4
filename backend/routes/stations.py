@@ -1,7 +1,6 @@
 from flask import Blueprint, jsonify, request
 from sqlalchemy import text
-from db_config import get_db
-from services import get_all_stations
+from services import get_all_stations, get_db
 from utils import haversine
 from datetime import datetime
 

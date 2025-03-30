@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from db_config import get_db
+from services import get_db
 from sqlalchemy import text
 from services import get_weather_by_coordinate
 import time

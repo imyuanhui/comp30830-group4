@@ -2,7 +2,7 @@ from flask import Flask
 from dotenv import load_dotenv
 from flask_cors import CORS
 import os
-from db_config import close_db
+from services import close_db
 from routes import register_blueprints  # Import the function that registers Blueprints
 
 # Load environment variables
