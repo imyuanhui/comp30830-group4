@@ -8,9 +8,10 @@ let bikeColor = "#5affa2"; // Color for bike availability markers
 let bikeLabelColor = "black"; // Label color for bike markers
 let standColor = "#FFD65A"; // Color for bike stand availability markers
 let standLabelColor = "black"; // Label color for stand markers
+const BASE_URL = "http://127.0.0.1:8000";
 
 // Fetch API key from backend and dynamically load Google Maps API script
-fetch("http://127.0.0.1:5000/api/config")
+fetch(`${BASE_URL}/api/config`)
   .then((response) => response.json())
   .then((config) => {
     const script = document.createElement("script");
@@ -24,7 +25,7 @@ fetch("http://127.0.0.1:5000/api/config")
 function initMap() {
   console.log("Map initialized");
   const dublin = { lat: 53.3498, lng: -6.2603 }; // Default map center
-  
+
   // Create a new Google Map instance
   map = new google.maps.Map(document.getElementById("map"), {
     zoom: 14,
@@ -85,7 +86,7 @@ function getMyLocation(map) {
 // Fetch station data and add markers to the map
 function getStations() {
   //todo: The availability info should retrieve directly from API response, only the data for chart is from database
-  fetch("http://127.0.0.1:5000/api/stations")
+  fetch(`${BASE_URL}/api/stations`)
     .then((response) => response.json())
     .then((data) => {
       if (!data || !data.data || !Array.isArray(data.data)) {
@@ -144,7 +145,7 @@ function addMarkers(stations) {
       content: defaultContent,
     });
 
-// Add click listener to show station details and weather info
+    // Add click listener to show station details and weather info
     marker.addListener("click", () => {
       marker.setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
 
@@ -155,10 +156,9 @@ function addMarkers(stations) {
 
       // Fetch real-time weather data for the station's location
       fetch(
-        "http://127.0.0.1:5000/api/weather/current?lat=" +
-          parseFloat(station.lat) +
-          "&lon=" +
-          parseFloat(station.lon)
+        `${BASE_URL}/api/weather/current?lat=${parseFloat(
+          station.lat
+        )}&lon=${parseFloat(station.lon)}`
       )
         .then((response) => response.json())
         .then((weather) => {
@@ -213,7 +213,7 @@ function addMarkers(stations) {
 }
 
 function drawStationChart(station) {
-  fetch(`http://127.0.0.1:5000/api/stations/history/demo/${station.id}`)
+  fetch(`${BASE_URL}/api/stations/history/demo/${station.id}`)
     .then((response) => response.json())
     .then((station_past) => {
       console.log(station_past);
@@ -375,7 +375,7 @@ function planJourney() {
   );
 
   fetch(
-    `http://127.0.0.1:5000/api/plan-journey?start_lat=${startLocation.lat}&start_lon=${startLocation.lon}&dest_lat=${destinationLocation.lat}&dest_lon=${destinationLocation.lon}`
+    `${BASE_URL}/api/plan-journey?start_lat=${startLocation.lat}&start_lon=${startLocation.lon}&dest_lat=${destinationLocation.lat}&dest_lon=${destinationLocation.lon}`
   )
     .then((response) => response.json())
     .then((data) => {
@@ -506,7 +506,7 @@ function initAutocomplete(field) {
 }
 
 function showWeatherPrompt(lat, lon) {
-  fetch("http://127.0.0.1:5000/api/weather/current?lat=" + lat + "&lon=" + lon)
+  fetch(`${BASE_URL}/api/weather/current?lat=${lat}&lon=${lon}`)
     .then((response) => response.json())
     .then((data) => {
       if (!data) {
