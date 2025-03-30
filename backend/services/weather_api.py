@@ -6,39 +6,38 @@ from flask import jsonify
 # Load environment variables from .env file
 load_dotenv()
 
+# Retrieve the OpenWeather API key from environment variables
 API_KEY = os.getenv("WEATHER_API_KEY")
 
-
 def get_weather_by_coordinate(lat=53.3476, lon=-6.2637):
+    """
+    Fetches the current weather data for a given latitude and longitude
+    using the OpenWeather API.
+
+    Parameters:
+    - lat (float): Latitude of the location (default is Dublin, Ireland).
+    - lon (float): Longitude of the location (default is Dublin, Ireland).
+
+    Returns:
+    - dict: A dictionary containing the weather status code and current weather data 
+      if the request is successful; otherwise, it returns only the status code.
+    """
+
+    # Check if the API key is available, raise an error if missing
     if not API_KEY:
         raise ValueError("Missing Openweather API key.")
     
-    # latitude and longitude of Dublin
-    
+    # Make a request to the OpenWeather API for current weather data
     res = requests.get(f'https://api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={lon}&appid={API_KEY}&exclude=minutely,hourly,daily,alerts&units=metric')
 
+    # If the request is successful (status code 200), return the current weather data
     if res.status_code == 200:
         data = res.json()
         current_data = data["current"]
         return {
             "status": res.status_code,
             "data": current_data
-            # "weather": current_data["weather"]["main"],
-            # "temperature": current_data["temp"],
-            # "wind": current_data["wind_speed"],
-            # "visibility": current_data["visibility"]
         }
     else:
+        # If the request fails, return only the status code
         return {"status": res.status_code}
-
-# def main():
-#     weather_data = get_weather()
-#     return jsonify(weather_data)
-#     # TODO: connect to database
-
-# main()
-
-# Things need to be clarified:
-# What kind of weather data do we need?
-# Time intervals of calling open weather api
-# Does the hourly,minutely,daily,alerts data useful for us?
