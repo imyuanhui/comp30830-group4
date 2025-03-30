@@ -3,7 +3,6 @@ from sqlalchemy.exc import SQLAlchemyError
 import pandas as pd
 from config import Config
 
-
 class DBHelper:
     def __init__(self):
         """

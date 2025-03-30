@@ -1,6 +1,5 @@
 from db_helper import DBHelper
 
-
 class DBSetUp:
     def __init__(self):
         self.dh = DBHelper()
