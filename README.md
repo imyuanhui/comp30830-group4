@@ -105,11 +105,3 @@ python app.py
 Navigate to the `frontend` folder and open `index.html` in a browser:
 
 Now, the web application should be running, displaying real-time Dublin bike station data and weather information. 🚲🌤️
-
-Journey Planner: Helps users plan their bike rides by identifying stations with bikes and available slots, considering proximity.
-
-Station Finder: Lets users find nearby stations based on various filters, such as distance or station name/address.
-
-Station History: Provides historical bike availability data for specific stations to track trends and usage patterns.
-
-Weather Integration: Retrieves current and historical weather data to help users decide the best time to travel or find a bike station based on weather conditions.
