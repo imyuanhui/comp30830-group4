@@ -3,7 +3,7 @@ from sqlalchemy import text
 from db_config import get_db
 from services import get_all_stations
 from utils import haversine
-from datetime import datetime, timedelta
+from datetime import datetime
 
 stations_bp = Blueprint("stations", __name__)
 

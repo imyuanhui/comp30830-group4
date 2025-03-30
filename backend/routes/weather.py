@@ -91,4 +91,3 @@ def get_historical_weather():
             data.append(row_dict)
     
     return jsonify(data=data)
-# TODO: discuss what data to store into our database
