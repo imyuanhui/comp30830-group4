@@ -9,8 +9,7 @@ from routes import register_blueprints  # Import the function that registers Blu
 load_dotenv()
 
 app = Flask(__name__)
-# CORS(app)
-CORS(app, origins=["http://127.0.0.1:3000"])
+CORS(app)
 register_blueprints(app) # Register Blueprints
 
 # Ensure database connections are properly closed
