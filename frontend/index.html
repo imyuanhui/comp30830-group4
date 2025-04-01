@@ -1,144 +1,110 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dublin Bikes</title>
 
-    <!-- Link to external CSS file for styling -->
-    <link rel="stylesheet" href="./static/styles.css" />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dublin Bikes</title>
 
-    <!-- Link to external JavaScript file with defer attribute to ensure execution after HTML parsing -->
-    <script src="./static/index.js" defer></script>
+  <!-- Link to external CSS file for styling -->
+  <link rel="stylesheet" href="./static/styles.css" />
 
-    <!-- Google Charts library for data visualization -->
-    <script
-      type="text/javascript"
-      src="https://www.gstatic.com/charts/loader.js"
-    ></script>
-  </head>
-  <body>
-    <!-- Top bar containing title, logo, weather information, and mode toggle -->
-    <div id="top-bar">
-      <h1>
-        Dublin Bikes
-        <img
-          src="./static/assets/db_image.png"
-          alt="Dublin Bikes Logo"
-          class="db-image"
-        />
-      </h1>
+  <!-- Link to external JavaScript file with defer attribute to ensure execution after HTML parsing -->
+  <script src="./static/index.js" defer></script>
 
-      <!-- Weather information trigger with default coordinates for Dublin -->
-      <span id="weather" onclick="showWeatherPrompt(53.3409, -6.2625)"
-        >Weather Information ☁️</span
-      >
+  <!-- Google Charts library for data visualization -->
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+</head>
 
-      <!-- Toggle switch for bike/slot mode -->
-      <div id="bike-slot-toggle">
-        <input type="checkbox" class="checkbox" id="modeSwitch" />
-        <div class="knobs"></div>
-        <div class="layer"></div>
-      </div>
+<body>
+  <!-- Top bar containing title, logo, weather information, and mode toggle -->
+  <div id="top-bar">
+    <h1>
+      Dublin Bikes
+      <img src="./static/assets/db_image.png" alt="Dublin Bikes Logo" class="db-image" />
+    </h1>
+
+    <!-- Weather information trigger with default coordinates for Dublin -->
+    <span id="weather" onclick="showWeatherPrompt(53.3409, -6.2625)">Weather Information ☁️</span>
+
+    <!-- Toggle switch for bike/slot mode -->
+    <div id="bike-slot-toggle">
+      <input type="checkbox" class="checkbox" id="modeSwitch" />
+      <div class="knobs"></div>
+      <div class="layer"></div>
     </div>
+  </div>
 
-    <!-- Main container holds the sidebar and map -->
-    <div id="main-container">
-      <div id="sidebar">
-        <!-- Journey Form Panel for user input -->
-        <div id="journey-form-panel">
-          <label>Please enter your starting location:</label>
-          <input
-            type="text"
-            id="start-location"
-            placeholder="Enter a starting location..."
-            autocomplete="off"
-          />
+  <!-- Main container holds the sidebar and map -->
+  <div id="main-container">
+    <div id="sidebar">
+      <!-- Journey Form Panel for user input -->
+      <div id="journey-form-panel">
+        <label>Please enter your starting location:</label>
+        <input type="text" id="start-location" placeholder="Enter a starting location..." autocomplete="off" />
 
-          <label>Please enter your destination:</label>
-          <input
-            type="text"
-            id="destination"
-            placeholder="Enter your destination..."
-            autocomplete="off"
-          />
+        <label>Please enter your destination:</label>
+        <input type="text" id="destination" placeholder="Enter your destination..." autocomplete="off" />
 
-          <label>Please input the day and hour you wish to travel:</label>
-
-          <!-- Dropdown for selecting the day of travel -->
-          <select id="day-select">
-            <option value="" selected disabled>Choose your day</option>
-            <option>Monday</option>
-            <option>Tuesday</option>
-            <option>Wednesday</option>
-            <option>Thursday</option>
-            <option>Friday</option>
-            <option>Saturday</option>
-            <option>Sunday</option>
-          </select>
-
-          <!-- Dropdown for selecting the hour of travel -->
-          <select id="hour-select">
-            <option value="" selected disabled>Choose your time</option>
-            <option>00:00</option>
-            <option>01:00</option>
-            <option>02:00</option>
-            <option>03:00</option>
-            <option>04:00</option>
-            <option>05:00</option>
-            <option>06:00</option>
-            <option>07:00</option>
-            <option>08:00</option>
-            <option>09:00</option>
-            <option>10:00</option>
-            <option>11:00</option>
-            <option>12:00</option>
-            <option>13:00</option>
-            <option>14:00</option>
-            <option>15:00</option>
-            <option>16:00</option>
-            <option>17:00</option>
-            <option>18:00</option>
-            <option>19:00</option>
-            <option>20:00</option>
-            <option>21:00</option>
-            <option>22:00</option>
-            <option>23:00</option>
-          </select>
-
-          <!-- Button to plan the journey -->
-          <button onclick="planJourney()">Plan Your Journey</button>
+        <label>When do you want to travel?</label>
+        <div class="radio-option">
+          <input type="radio" id="mode-now" name="timeMode" value="now" checked />
+          <label for="mode-now">Leave now</label>
+        </div>
+        <div class="radio-option">
+          <input type="radio" id="mode-future" name="timeMode" value="future" />
+          <label for="mode-future">Plan ahead</label>
         </div>
 
-        <!-- Journey Result Panel (initially hidden) -->
-        <div id="journey-result-panel" style="display: none">
-          <div id="results-content">
-            <!-- Journey results will be injected here -->
-          </div>
+        <!-- Only shown if user selects "Plan ahead" -->
+        <label id="day-label" for="day-select" class="disabled-label">Travel day:</label>
+        <select id="day-select" disabled>
+          <option value="" selected disabled>Choose your day</option>
+        </select>
 
-          <!-- Button to return to the journey form -->
-          <button onclick="goBackToForm()">← Back</button>
+        <label id="hour-label" for="hour-select" class="disabled-label">Travel time:</label>
+        <select id="hour-select" disabled>
+          <option value="" selected disabled>Choose your time</option>
+        </select>
+
+        <!-- Button to plan the journey -->
+        <button onclick="planJourney()">Plan Your Journey</button>
+        <div class="legend"></div>
+      </div>
+
+
+
+      <!-- Journey Result Panel (initially hidden) -->
+      <div id="journey-result-panel" style="display: none">
+        <div id="results-content">
+          <!-- Journey results will be injected here -->
         </div>
-      </div>
 
-      <!-- Map container to display bike station-->
-      <div id="map-container">
-        <div id="map"></div>
+        <!-- Button to return to the journey form -->
+        <button onclick="goBackToForm()">← Back</button>
       </div>
     </div>
 
-    <!-- Footer with team information -->
-    <footer>
-      <p>Created by Wan-Hua Hsieh, Prakhar Dayal, and Yuanhui Xu (Group 4)</p>
-      <p>UCD Dublin</p>
-    </footer>
-
-    <!-- Modal for displaying additional information -->
-    <div id="myModal" class="modal">
-      <div class="modal-content">
-        <span class="close">&times;</span>
-        <p id="modalText"></p>
-      </div>
+    <!-- Map container to display bike station-->
+    <div id="map-container">
+      <div id="map"></div>
     </div>
-  </body>
+    
+  </div>
+
+  <!-- Footer with team information -->
+  <footer>
+    <p>Created by Wan-Hua Hsieh, Prakhar Dayal, and Yuanhui Xu (Group 4)</p>
+    <p>UCD Dublin</p>
+  </footer>
+
+  <!-- Modal for displaying additional information -->
+  <div id="myModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <p id="modalText"></p>
+    </div>
+  </div>
+</body>
+
 </html>
