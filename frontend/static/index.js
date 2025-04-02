@@ -1,13 +1,20 @@
 // Declaring the global variables for map, markers, and UI states
 let map; // Google Map instance
+let showUserLocation = false;
+let showJourneyMarkers = false;
+let journeyMarkers = [];
 let markers = []; // Array to store station markers
 let stationsVisible = true; // Toggle visibility of stations
 let currentMode = "bike"; // Default mode: 'bike', can be toggled to 'stand'
 let activeInfoWindow = null; // Track currently open InfoWindow
-let bikeColor = "#5affa2"; // Color for bike availability markers
+let bikeColor = "#71BF8D"; // Color for bike availability markers
 let bikeLabelColor = "black"; // Label color for bike markers
-let standColor = "#FFD65A"; // Color for bike stand availability markers
+let standColor = "#F7CE68"; // Color for bike stand availability markers
 let standLabelColor = "black"; // Label color for stand markers
+const daySelect = document.getElementById("day-select"); // Get the day selection dropdown element
+const hourSelect = document.getElementById("hour-select"); // Get the hour selection dropdown element
+let now = new Date(); // Get the current date and time at the moment the page loads
+let currentHour = now.getHours(); // Extract the current hour (0 to 23) to determine which time slots have already passed today
 const BASE_URL = "http://127.0.0.1:8000";
 
 // Fetch API key from backend and dynamically load Google Maps API script
@@ -41,46 +48,40 @@ function initMap() {
 
 // Get and display user's current location
 function getMyLocation(map) {
-  // Create a geolocation control button
-  const locationButton = document.createElement("button");
-  locationButton.textContent = "Current Location";
-  locationButton.classList.add("custom-map-control-button");
-  map.controls[google.maps.ControlPosition.TOP_CENTER].push(locationButton);
+  if (!navigator.geolocation) {
+    alert("Your browser doesn't support Geolocation.");
+    return;
+  }
 
-  locationButton.addEventListener("click", () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const userLocation = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          };
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
 
-          // Center the map on the user's location
-          map.setCenter(userLocation);
+      const userLocation = {
+        lat: latitude,
+        lng: longitude,
+      };
 
-          // Add a marker for the user's location
-          new google.maps.Marker({
-            position: userLocation,
-            map: map,
-            icon: {
-              path: google.maps.SymbolPath.CIRCLE,
-              scale: 10,
-              fillColor: "blue",
-              fillOpacity: 0.8,
-              strokeWeight: 2,
-              strokeColor: "white",
-            },
-          });
+      map.setCenter(userLocation);
+      map.setZoom(14);
+      showUserLocation = true;
+      updateLegend();
+      const userMarker = new google.maps.Marker({
+        position: userLocation,
+        map: map,
+        title: "You are here",
+        icon: {
+          url: "./static/assets/current_location.png",
+          scaledSize: new google.maps.Size(40, 40),
         },
-        () => {
-          alert("Geolocation failed. Please enable location services.");
-        }
-      );
-    } else {
-      alert("Your browser doesn't support Geolocation.");
+        animation: google.maps.Animation.DROP,
+      });
+    },
+    (error) => {
+      alert("Geolocation failed. Please enable location services.");
     }
-  });
+  );
 }
 
 // Fetch station data and add markers to the map
@@ -292,59 +293,135 @@ function toggleMode() {
   updateMarkers();
 }
 
-document.addEventListener("DOMContentLoaded", function () {
+// Sets up the toggle behavior between "bike" and "stand" mode
+function setupModeToggle() {
   const modeSwitch = document.getElementById("modeSwitch");
+
+  // Listen for toggle change and update current mode accordingly
   modeSwitch.addEventListener("change", function () {
     currentMode = this.checked ? "stand" : "bike";
-    updateMarkers();
+    updateMarkers(); // Refresh the map markers based on selected mode
+    updateLegend(); // Refresh the legends
   });
+}
+
+function setupTimeToggle() {
+  document.querySelectorAll('input[name="timeMode"]').forEach((radio) => {
+    radio.addEventListener("change", () => {
+      const isFuture = document.getElementById("mode-future").checked;
+
+      daySelect.disabled = !isFuture;
+      hourSelect.disabled = !isFuture;
+
+      if (!isFuture) {
+        setNowAsDefaultTime();
+      } else {
+        updateHourOptions(daySelect.value);
+      }
+    });
+  });
+}
+
+function setupDaySelector() {
+  const now = new Date();
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(now);
+    date.setDate(now.getDate() + i);
+    // format: 2024-04-01 (Tue)
+    const yyyyMMdd = date.toISOString().split("T")[0];
+    const weekday = date.toLocaleDateString("en-IE", { weekday: "short" });
+    const label = `${yyyyMMdd} (${weekday})`;
+
+    const option = new Option(label, yyyyMMdd);
+    if (i === 0) option.selected = true;
+
+    daySelect.appendChild(option);
+  }
+
+  daySelect.addEventListener("change", () => {
+    updateHourOptions(daySelect.value);
+  });
+}
+
+function updateHourOptions(selectedDateStr) {
+  const now = new Date();
+  const isToday = selectedDateStr === now.toISOString().split("T")[0];
+  const currentHour = now.getHours();
+
+  hourSelect.innerHTML = "";
+
+  for (let h = 0; h < 24; h++) {
+    if (isToday && h <= currentHour) continue;
+
+    const timeStr = `${String(h).padStart(2, "0")}:00`;
+    hourSelect.appendChild(new Option(timeStr, timeStr));
+  }
+
+  // Optionally select first available
+  if (hourSelect.options.length > 0) {
+    hourSelect.options[0].selected = true;
+  }
+}
+
+function setNowAsDefaultTime() {
+  const now = new Date();
+  const todayStr = now.toISOString().split("T")[0];
+  const hour = String(now.getHours()).padStart(2, "0");
+  const minute = String(now.getMinutes()).padStart(2, "0");
+  const nowStr = `${hour}:${minute}`;
+
+  daySelect.value = todayStr;
+
+  // Set hour select with one current-time option
+  hourSelect.innerHTML = `<option value="${nowStr}" selected>${nowStr} (Now)</option>`;
+  hourSelect.disabled = true;
+}
+
+// Setup when DOM is ready
+document.addEventListener("DOMContentLoaded", () => {
+  setupModeToggle();
+  setupDaySelector();
+  setupTimeToggle();
+  setNowAsDefaultTime();
+  updateLegend();
 });
 
 function setMarkerStyle(marker, mode = "default") {
   const station = marker.station_data;
-  let fillColor;
-  let label;
-  let strokeColor;
-  let strokeWeight;
-  let labelColor;
+  let availability;
+  let color;
+  let iconMode = currentMode;
 
   if (currentMode === "bike") {
-    fillColor = bikeColor;
-    labelColor = bikeLabelColor;
-    label = station.details.available_bikes.toString();
+    availability = station.details.available_bikes;
   } else {
-    fillColor = standColor;
-    labelColor = standLabelColor;
-    label = station.details.available_bike_stands.toString();
+    availability = station.details.available_bike_stands;
   }
 
-  if (mode == "default") {
-    strokeColor = "white";
-    strokeWeight = 1;
-  } else if (mode == "start_station") {
-    strokeColor = "green";
-    strokeWeight = 2;
-  } else if (mode == "destination_station") {
-    strokeColor = "red";
-    strokeWeight = 2;
+  if (availability == 0) {
+    color = "gray";
+  } else if (availability <= 5) {
+    color = "yellow";
+  } else {
+    color = "green";
   }
 
-  marker.setIcon({
-    path: google.maps.SymbolPath.CIRCLE,
-    scale: 15,
-    fillColor: fillColor,
-    fillOpacity: 0.9,
-    strokeColor: strokeColor,
-    strokeWeight: strokeWeight,
-    labelOrigin: new google.maps.Point(0, 0),
-  });
+  const iconUrl = `./static/assets/${iconMode}_${color}.png`;
 
-  marker.setLabel({
-    text: label,
-    fontSize: "14px",
-    fontFamily: "sans-serif",
-    color: labelColor,
-  });
+  if (mode == "selected") {
+    marker.setIcon({
+      url: iconUrl,
+      scaledSize: new google.maps.Size(60, 60),
+    });
+
+    marker.setAnimation(google.maps.Animation.BOUNCE);
+  } else {
+    marker.setIcon({
+      url: iconUrl,
+      scaledSize: new google.maps.Size(40, 40),
+    });
+    marker.setAnimation(null);
+  }
 }
 
 function updateMarkers() {
@@ -362,10 +439,7 @@ function planJourney() {
     return;
   }
 
-  alert(
-    `Journey planned from ${startLocation.address} to ${destinationLocation.address} on ${day} at ${hour}.`
-  );
-  // mark start location on the map
+  map.setCenter({lat: startLocation.lat, lng: startLocation.lon});
   addJourneyLocationMarker("start", startLocation.lat, startLocation.lon);
   // mark destination location on the map
   addJourneyLocationMarker(
@@ -398,9 +472,9 @@ function highlightJourneyStations(startId, destId) {
     const stationId = marker.station_data.id;
 
     if (stationId === startId) {
-      setMarkerStyle(marker, "start_station");
+      setMarkerStyle(marker, "selected");
     } else if (stationId === destId) {
-      setMarkerStyle(marker, "destination_station");
+      setMarkerStyle(marker, "selected");
     }
   }
 }
@@ -408,6 +482,9 @@ function highlightJourneyStations(startId, destId) {
 function goBackToForm() {
   document.getElementById("journey-form-panel").style.display = "block";
   document.getElementById("journey-result-panel").style.display = "none";
+  clearJourneyLocationMarkers();
+  updateMarkers();
+  updateLegend();
 }
 
 function showJourneyResultPanel(
@@ -426,59 +503,53 @@ function showJourneyResultPanel(
     `;
   } else {
     resultHtml = `
-    <h1>🚲 Journey Plan Summary</h1>
-    <p><strong>From:</strong> ${startLocation.address}</p>
-    <p><strong>To:</strong> ${destinationLocation.address}</p>
-    <p><strong>Day & Time:</strong> ${day}, ${hour}</p>
+    <h3>🚲 Journey Plan Summary</h3>
+    <p><strong>From:</strong><br> ${startLocation.address}</p>
+    <p><strong>To:</strong><br> ${destinationLocation.address}</p>
+    <p><strong>Day & Time:</strong><br> ${day}, ${hour}</p>
 
-    <h2>📍 Start Station</h2>
+    <h4>📍 Start Station</h4>
     <p><strong>Name:</strong> ${data.start_station.name}</p>
     <p><strong>Available Bikes:</strong> ${data.start_station.details.available_bikes}</p>
     <p><strong>Last Updated:</strong> ${data.start_station.details.last_update}</p>
 
-    <h2>🏁 Destination Station</h2>
+    <h4>🏁 Destination Station</h4>
     <p><strong>Name:</strong> ${data.destination_station.name}</p>
     <p><strong>Available Stands:</strong> ${data.destination_station.details.available_bike_stands}</p>
     <p><strong>Last Updated:</strong> ${data.destination_station.details.last_update}</p>
+
+    <div class="legend"></div>
   `;
-    highlightJourneyStations(
-      data.start_station.id,
-      data.destination_station.id
-    );
   }
+  showJourneyMarkers = true;
   document.getElementById("results-content").innerHTML = resultHtml;
+  highlightJourneyStations(data.start_station.id, data.destination_station.id);
+  updateLegend();
 }
 
 let startLocation = null;
 let destinationLocation = null;
 
 function addJourneyLocationMarker(type, lat, lng) {
-  const baseIcon = {
-    labelOrigin: new google.maps.Point(20, 12),
-    scaledSize: new google.maps.Size(40, 40),
-  };
-  let iconUrl = "";
-  let labelText = "";
+  const iconUrl = `./static/assets/${type}_location.png`;
 
-  if (type === "start") {
-    iconUrl = "http://maps.google.com/mapfiles/ms/icons/green-dot.png";
-    labelText = "S";
-  } else if (type === "destination") {
-    iconUrl = "http://maps.google.com/mapfiles/ms/icons/red-dot.png";
-    labelText = "D";
-  }
-
-  new google.maps.Marker({
-    position: { lat: lat, lng: lng },
+  const marker = new google.maps.Marker({
+    position: { lat, lng },
     map: map,
-    icon: { ...baseIcon, url: iconUrl },
-    label: {
-      text: labelText,
-      color: "white",
-      fontWeight: "bold",
+    icon: {
+      url: iconUrl,
+      scaledSize: new google.maps.Size(40, 40),
     },
-    title: type.charAt(0).toUpperCase() + type.slice(1),
   });
+  journeyMarkers.push(marker);
+}
+
+function clearJourneyLocationMarkers() {
+  for (const marker of journeyMarkers) {
+    marker.setMap(null);        // Remove from map
+  }
+  journeyMarkers = [];          // Clear the array
+  showJourneyMarkers = false;   // Optional: hide legend icons
 }
 
 function initAutocomplete(field) {
@@ -527,6 +598,38 @@ function showWeatherPrompt(lat, lon) {
     .catch((error) => {
       console.error("Error fetching weather data:", error);
     });
+}
+
+function updateLegend() {
+  const legends = document.getElementsByClassName("legend"); // 回傳的是多個元素
+
+  const content = `
+    <h4>Legend</h4>
+    <ul>
+      <li><img src="./static/assets/${currentMode}_green.png" /> Available (6+)</li>
+      <li><img src="./static/assets/${currentMode}_yellow.png" /> Low (1–5)</li>
+      <li><img src="./static/assets/${currentMode}_gray.png" /> Empty (0)</li>
+
+      ${
+        showUserLocation
+          ? `<li><img src="./static/assets/current_location.png" /> Your Location</li>`
+          : ""
+      }
+
+      ${
+        showJourneyMarkers
+          ? `
+        <li><img src="./static/assets/start_location.png" /> Start location</li>
+        <li><img src="./static/assets/destination_location.png" /> Destination</li>
+        `
+          : ""
+      }
+    </ul>
+  `;
+
+  for (const legend of legends) {
+    legend.innerHTML = content;
+  }
 }
 
 window.onload = function () {

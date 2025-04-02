@@ -1,4 +1,6 @@
 from db_helper import DBHelper
+import os
+import pandas as pd
 
 class DBSetUp:
     def __init__(self):
@@ -136,6 +138,14 @@ class DBSetUp:
         """
         self.dh.create_table(sql=sql, table_name="weather.weather_condition")
 
+    def load_demo_availability_data(self):
+        """Load demo availability data from CSV into the database."""
+        base_dir = os.path.dirname(__file__)
+        file_path = os.path.join(base_dir, "availability_demo.csv")
+        df = pd.read_csv(file_path, sep=';')
+        self.dh.save_df_data(df=df, db_name="bike", table_name="availability")
+
+        
     def run(self):
         self.create_bike_database()
         self.create_bike_station()
@@ -145,3 +155,4 @@ class DBSetUp:
         self.create_weather_daily_forecast()
         self.create_weather_hourly_forecast()
         self.create_weather_weather_condition()
+        self.load_demo_availability_data()

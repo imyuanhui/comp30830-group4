@@ -1,3 +1,11 @@
+:root {
+  --bike-color: #71BF8D;
+  --stand-color: #F7CE68;
+  --background-color: #03213d;;  
+  --content-color:white;
+  --button-color: rgb(24, 158, 195);
+}
+
 body {
   margin: 0;
   font-family: Arial, sans-serif;
@@ -11,8 +19,8 @@ body {
 #top-bar {
   width: 100%;
   height: 4%;
-  background-color: #03213d;
-  color: white;
+  background-color: var(--background-color);
+  color: var(--content-color);
   padding: 15px;
   display: flex;
   justify-content: center;
@@ -52,8 +60,8 @@ body {
 /* Sidebar */
 #sidebar {
   width: 400px;
-  background-color: #03213d;
-  color: white;
+  background-color: var(--background-color);
+  color: var(--content-color);
   padding: 30px 40px;
   display: flex;
   flex-direction: column;
@@ -62,7 +70,7 @@ body {
   overflow-y: auto;
 }
 
-#sidebar label {
+#sidebar label:not(.radio-option) {
   margin-bottom: 8px;
   display: block;
 }
@@ -81,8 +89,8 @@ body {
 }
 
 #sidebar button {
-  background-color: rgb(24, 158, 195);
-  color: white;
+  background-color: var(--button-color);
+  color: var(--content-color);
   cursor: pointer;
 }
 
@@ -99,8 +107,8 @@ body {
 }
 
 footer {
-  background-color: #03213d;
-  color: white;
+  background-color: var(--background-color);
+  color: var(--content-color);
   text-align: center;
   padding: 10px;
   width: 100%;
@@ -201,7 +209,7 @@ footer {
 
 #bike-slot-toggle {
   position: relative;
-  width: 74px;
+  width: 100px;
   height: 36px;
   margin: 20px auto;
   overflow: hidden;
@@ -221,24 +229,24 @@ footer {
   position: absolute;
   top: 4px;
   left: 4px;
-  width: 36px;
+  width: 50px;
   height: 28px;
-  color: black;
+  color: white;
   font-size: 12px;
   font-weight: bold;
   text-align: center;
   line-height: 28px;
-  background-color: #5affa2;
+  background-color: var(--bike-color);
   border-radius: 50px;
   transition: 0.3s ease all;
   z-index: 2;
 }
 
 #bike-slot-toggle .checkbox:checked + .knobs:before {
-  content: "Slot";
+  content: "Stand";
   color: black;
-  left: 34px;
-  background-color: #ffd65a;
+  left: 44px;
+  background-color:var(--stand-color);
 }
 
 #bike-slot-toggle .layer {
@@ -248,4 +256,43 @@ footer {
   border-radius: 50px;
   z-index: 1;
   position: absolute;
+}
+
+.legend {
+  margin-top: 20px;
+  padding-top: 10px;
+  border-top: 1px solid #ccc;
+  font-size: 14px;
+  color: white;
+}
+
+.legend ul {
+  list-style: none;
+  padding: 0;
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.legend img {
+  width: 40px;
+  height: 40px;
+  margin-right: 10px;
+}
+
+#time-mode {
+  display: flex;
+  flex-direction: column;
+  
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content; 
+  white-space: nowrap;
 }
