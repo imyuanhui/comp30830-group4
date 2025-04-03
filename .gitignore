@@ -3,3 +3,5 @@ bike_data
 weather_data
 config.json
 .env
+.ipynb_checkpoints
+final_merged_data.csv
