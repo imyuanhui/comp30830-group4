@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from services import get_all_stations
+from services import get_all_stations, predict_availability_status
 from utils import haversine
 
 journey_bp = Blueprint("journey", __name__)
@@ -95,3 +95,24 @@ def plan_journey():
         "start_station": start_station,
         "destination_station": dest_station
     })
+
+
+@journey_bp.route("/plan-journey/future", methods=["GET"])
+def plan_future_journey():
+    station_id = request.args.get("station_id")
+    timestamp = request.args.get("timestamp")  # Todo: confirm the format of timestamp with frontend
+
+    if not station_id or not timestamp:
+        return jsonify({"error": "Missing station_id or timestamp"}), 400
+
+    try:
+        res = predict_availability_status(station_id, timestamp)
+
+        return jsonify({
+            "station_id": station_id,
+            "timestamp": timestamp,
+            "sufficient": res
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
