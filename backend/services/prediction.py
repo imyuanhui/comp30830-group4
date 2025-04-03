@@ -1,10 +1,14 @@
 import bz2
 import pickle
 import datetime
-import numpy as np
+import pandas as pd
+import os
 
 def predict_availability_status(station_id, timestamp):
-    with bz2.BZ2File("../machine_learning/bike_availability.pkl.bz2", "rb") as f:
+    model_filename = 'bike_availability_model_rf.pkl.bz2'
+    model_path = os.path.join(os.getcwd(), "machine_learning", model_filename)
+    print(model_path)
+    with bz2.BZ2File(model_path, "rb") as f:
         model = pickle.load(f)
 
     def extract_features(timestamp):
@@ -18,13 +22,15 @@ def predict_availability_status(station_id, timestamp):
         return day_of_week, hour, is_holiday
     
     day_of_week, hour, is_holiday = extract_features(timestamp)
-    
+
     # Prepare input data for model
-    input_data = np.array([[int(station_id), day_of_week, is_holiday, hour]])
+    # Prepare input data as a DataFrame with the correct column names
+    input_data = pd.DataFrame([[station_id, day_of_week, is_holiday, hour]],
+                            columns=['station_id', 'day_of_week', 'is_holiday', 'hour'])
 
     # Make prediction
     prediction = model.predict(input_data)[0]
-    return prediction == 1 # sufficient:1, insufficient:0
+    return "sufficient" if prediction == 1 else "insufficient"
 
 
 
