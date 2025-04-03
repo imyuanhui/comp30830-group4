@@ -37,61 +37,66 @@ def get_stations():
 
     Example Response:
     {
-        "data": [
-            {
-                "address": "York Street East",
-                "details": {
-                    "available_bike_stands": 23,
-                    "available_bikes": 9,
-                    "last_update": "2025-03-26 18:27:23",
-                    "status": "OPEN"
-                },
-                "id": 52,
-                "lat": 53.338755,
-                "lon": -6.262003,
-                "name": "YORK STREET EAST"
-            },
-            {
-                "address": "Clarendon Row",
-                "details": {
-                    "available_bike_stands": 24,
-                    "available_bikes": 7,
-                    "last_update": "2025-03-26 18:25:19",
-                    "status": "OPEN"
-                },
-                "id": 1,
-                "lat": 53.340927,
-                "lon": -6.262501,
-                "name": "CLARENDON ROW"
-            },
-            {
-                "address": "Exchequer Street",
-                "details": {
-                    "available_bike_stands": 4,
-                    "available_bikes": 20,
-                    "last_update": "2025-03-26 18:25:07",
-                    "status": "OPEN"
-                },
-                "id": 9,
-                "lat": 53.343034,
-                "lon": -6.263578,
-                "name": "EXCHEQUER STREET"
-            },
-            {
-                "address": "York Street West",
-                "details": {
-                    "available_bike_stands": 0,
-                    "available_bikes": 0,
-                    "last_update": "2025-03-26 18:23:07",
-                    "status": "OPEN"
-                },
-                "id": 51,
-                "lat": 53.339334,
-                "lon": -6.264699,
-                "name": "YORK STREET WEST"
-            }
-        ]
+    "data": [
+        {
+        "address": "York Street East",
+        "details": {
+            "available_bike_stands": 29,
+            "available_bikes": 3,
+            "capacity": 32,
+            "last_update": "2025-04-03 18:27:19",
+            "status": "OPEN"
+        },
+        "id": 52,
+        "lat": 53.338755,
+        "lon": -6.262003,
+        "name": "YORK STREET EAST"
+        },
+        {
+        "address": "Clarendon Row",
+        "details": {
+            "available_bike_stands": 21,
+            "available_bikes": 10,
+            "capacity": 31,
+            "last_update": "2025-04-03 18:27:06",
+            "status": "OPEN"
+        },
+        "id": 1,
+        "lat": 53.340927,
+        "lon": -6.262501,
+        "name": "CLARENDON ROW"
+        },
+        {
+        "address": "Exchequer Street",
+        "details": {
+            "available_bike_stands": 5,
+            "available_bikes": 19,
+            "capacity": 24,
+            "last_update": "2025-04-03 18:28:13",
+            "status": "OPEN"
+        },
+        "id": 9,
+        "lat": 53.343034,
+        "lon": -6.263578,
+        "name": "EXCHEQUER STREET"
+        },
+        {
+        "address": "York Street West",
+        "details": {
+            "available_bike_stands": 0,
+            "available_bikes": 0,
+            "capacity": 40,
+            "last_update": "2025-04-03 18:22:21",
+            "status": "OPEN"
+        },
+        "id": 51,
+        "lat": 53.339334,
+        "lon": -6.264699,
+        "name": "YORK STREET WEST"
+        }
+    ]
     }
+
 
     Returns:
     - 200 OK: JSON list of bike stations matching the filters.
