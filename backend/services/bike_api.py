@@ -47,7 +47,8 @@ def get_all_stations():
                     "status": row['status'],
                     "last_update": formatted_date,
                     "available_bikes": row['available_bikes'],
-                    "available_bike_stands": row['available_bike_stands']
+                    "available_bike_stands": row['available_bike_stands'],
+                    "capacity": row['bike_stands']
                 }
             }
 
