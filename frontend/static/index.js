@@ -1,20 +1,26 @@
-// Check if the message has already been shown in the past
-if (!localStorage.getItem('messageShown')) {
-  // Show the message if not shown before
-  const message = document.getElementById('animated-message');
-  message.style.display = 'block';
+// Wait until the entire page (images, stylesheets, etc.) is fully loaded
+window.onload = function () {
+  // Check if the animated message has already been shown to the user
+  const messageShown = localStorage.getItem("messageShown");
 
-  // Mark that the message has been shown
-  localStorage.setItem('messageShown', 'true');
+  // If the message has not been shown before
+  if (!messageShown) {
+    // Get the animated message element from the DOM
+    const messageDiv = document.getElementById("animated-message");
+    
+    // Force a reflow to ensure any previously applied animation is reset
+    void messageDiv.offsetWidth;
 
-  // Hide the message after animation ends (3s duration)
-  setTimeout(() => {
-    message.style.display = 'none';
-  }, 3000); // Match the duration of the animation
-}
+    // Make sure the message is visible (was hidden with CSS `display: none`)
+    messageDiv.style.display = "block";
 
-// Your existing JS functionality (Weather prompt, Journey planning, Toggle, etc.)
-// Example of initializing your map, weather functions, etc.
+    // Add the 'animate' class to trigger the CSS animation
+    messageDiv.classList.add("animate");
+
+    // Store a flag in localStorage so the animation won't show again
+    localStorage.setItem("messageShown", "true");
+  }
+};
 
 
 // Declaring the global variables for map, markers, and UI states
