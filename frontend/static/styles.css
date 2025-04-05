@@ -440,15 +440,15 @@ button:hover .stars {
 
 #bike-gif-container {
   position: fixed; /* Fixes it to a specific position on the screen */
-  right: 140px; /* 20px from the right side of the screen */
+  right: 130px; /* 20px from the right side of the screen */
   bottom: 20px; /* 20px from the bottom of the screen */
   z-index: 999; /* Ensures it appears in front of other elements */
   text-align: center;
 }
 
 #bike-gif-container img {
-  width: 1800px; /* Set the width of the circular image */
-  height: 100px; /* Set the height of the circular image */
+  width: 180px; /* Set the width of the circular image */
+  height: 95px; /* Set the height of the circular image */
   border-radius: 20%; /* Makes the image circular */
   object-fit: cover; /* Ensures the image covers the circular area without stretching */
 }
