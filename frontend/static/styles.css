@@ -1,7 +1,7 @@
 :root {
   --bike-color: #71BF8D;
   --stand-color: #F7CE68;
-  --background-color: #03213d;;  
+  --background-color: #21384e;;  
   --content-color:white;
   --button-color: rgb(1, 28, 41);
 }
@@ -23,14 +23,30 @@ body {
   height: 4%;
   background-color: var(--background-color);
   color: var(--content-color);
-  padding: 15px;
+  padding: 15px 30px;
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   z-index: 10;
   position: fixed;
   top: 0;
   left: 0;
+}
+
+#top-bar-left,
+#top-bar-center,
+#top-bar-right {
+  display: flex;
+  align-items: center;
+}
+
+#top-bar-center {
+  flex-grow: 1;
+  justify-content: center;
+}
+
+#top-bar-right {
+  justify-content: flex-end;
 }
 
 .db-image {
@@ -61,6 +77,7 @@ body {
 
 /* Sidebar */
 #sidebar {
+  background-color: rgba(3, 33, 61, 0.95); /* subtle transparency */
   width: 400px;
   background-color: var(--background-color);
   color: var(--content-color);
@@ -124,6 +141,13 @@ footer {
   margin-left: auto;
   margin-right: auto;
 }
+
+#weather:hover {
+  color: #aee0ed;
+  text-shadow: 0 0 5px #71BF8D;
+  transition: all 0.3s ease;
+}
+
 
 /* Responsive Design */
 @media (max-width: 768px) {
@@ -213,9 +237,11 @@ footer {
   position: relative;
   width: 100px;
   height: 36px;
-  margin: 20px auto;
+  margin-left: auto;
+  margin-right: 110px; /* Adjust this value to move it closer to the right edge */
   overflow: hidden;
 }
+
 
 #bike-slot-toggle .checkbox {
   width: 100%;
@@ -249,6 +275,7 @@ footer {
   color: black;
   left: 44px;
   background-color:var(--stand-color);
+  box-shadow: 0 0 12px var(--stand-color);
 }
 
 #bike-slot-toggle .layer {
@@ -259,6 +286,7 @@ footer {
   z-index: 1;
   position: absolute;
 }
+
 
 .legend {
   margin-top: 20px;
@@ -408,4 +436,8 @@ button:hover .stars {
     transform: translateY(-50%) translateX(50%); /* Keep vertically centered but move off-screen */
   }
 }
+
+
+
+
 
