@@ -17,22 +17,34 @@
 </head>
 
 <body>
+
+  <div id="animated-message">
+    <img src="./static/assets/bikegif.gif" alt="Moving Bicycle" style="width: 50px; height: 50px; margin-right: 10px;">
+    Ride a Bike, Save the Planet & Stay Fit!
+  </div>
+  
+
   <!-- Top bar containing title, logo, weather information, and mode toggle -->
   <div id="top-bar">
-    <h1>
-      Dublin Bikes
-      <img src="./static/assets/db_image.png" alt="Dublin Bikes Logo" class="db-image" />
-    </h1>
-
-    <!-- Weather information trigger with default coordinates for Dublin -->
-    <span id="weather" onclick="showWeatherPrompt(53.3409, -6.2625)">Weather Information ☁️</span>
-
-    <!-- Toggle switch for bike/slot mode -->
-    <div id="bike-slot-toggle">
-      <input type="checkbox" class="checkbox" id="modeSwitch" />
-      <div class="knobs"></div>
-      <div class="layer"></div>
+    <div id="top-bar-left">
+      <h1>
+        Dublin Bikes
+        <img src="./static/assets/db_image.png" alt="Dublin Bikes Logo" class="db-image" />
+      </h1>
     </div>
+    
+    <div id="top-bar-center">
+      <span id="weather" onclick="showWeatherPrompt(53.3409, -6.2625)">Weather Information ☁️</span>
+    </div>
+    
+    <div id="top-bar-right">
+      <div id="bike-slot-toggle">
+        <input type="checkbox" class="checkbox" id="modeSwitch" />
+        <div class="knobs"></div>
+        <div class="layer"></div>
+      </div>
+    </div>
+    
   </div>
 
   <!-- Main container holds the sidebar and map -->
@@ -70,6 +82,10 @@
         <!-- Button to plan the journey -->
         <button onclick="planJourney()">Plan Your Journey <span class="stars"></span> </button>
         <div class="legend"></div>
+        <!-- 🚲 Bike GIF at bottom of sidebar -->
+          <div id="bike-gif-container" style="text-align: center; margin-top: 20px;">
+            <img src="./static/assets/bike_gif.gif" alt="Bike GIF" style="width: 100px;" />
+          </div>
       </div>
 
 
@@ -94,6 +110,7 @@
 
   <!-- Footer with team information -->
   <footer>
+    <p>Pedal your way to a cleaner and greener city.</p>
     <p>Created by Wan-Hua Hsieh, Prakhar Dayal, and Yuanhui Xu (Group 4)</p>
     <p>UCD Dublin</p>
   </footer>
