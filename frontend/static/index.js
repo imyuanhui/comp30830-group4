@@ -601,29 +601,51 @@ function initAutocomplete(field) {
   });
 }
 
+let weatherTimeout; // Store the timeout reference
+
 function showWeatherPrompt(lat, lon) {
+  let weatherInfo = document.getElementById("weather-info");
+
+  // If weather is already visible, clear it and reset
+  if (weatherInfo.innerHTML.trim() !== "") {
+    clearTimeout(weatherTimeout);
+    weatherInfo.innerHTML = "";
+    return;
+  }
+
   fetch(`${BASE_URL}/api/weather/current?lat=${lat}&lon=${lon}`)
     .then((response) => response.json())
     .then((data) => {
       if (!data) {
-        throw new Error(
-          "Invalid data format: Expected an object with a 'data' array"
-        );
+        throw new Error("Invalid data format: Expected an object with a 'data' array");
       }
-      var iconurl =
-        "http://openweathermap.org/img/w/" + data.weather[0].icon + ".png";
-      showModal(
-        "<p><strong>Current weather:</strong> " +
-          data.weather[0].description +
-          "<img src= " +
-          iconurl +
-          "> </img></p>"
-      );
+
+      var iconUrl = `http://openweathermap.org/img/w/${data.weather[0].icon}.png`;
+      var temp = data.temp;
+      var weatherDescription = data.weather[0].description;
+
+      // Set the weather info inline in the top bar
+      weatherInfo.innerHTML = 
+        `<img src="${iconUrl}" alt="Weather Icon" style="width: 25px; vertical-align: middle; margin-left: 10px;"> 
+         <span style="font-weight: bold; color: #aee0ed; margin-left: 5px;">${temp}°C (${weatherDescription})</span>`;
+
+      // Auto-hide after 3 seconds
+      weatherTimeout = setTimeout(() => {
+        weatherInfo.innerHTML = "";
+      }, 3000);
     })
     .catch((error) => {
       console.error("Error fetching weather data:", error);
+      weatherInfo.innerHTML = "<span style='color: red;'>Failed to load weather</span>";
+
+      // Hide error message after 3 seconds
+      weatherTimeout = setTimeout(() => {
+        weatherInfo.innerHTML = "";
+      }, 3000);
     });
 }
+
+
 
 function updateLegend() {
   const legends = document.getElementsByClassName("legend"); // 回傳的是多個元素

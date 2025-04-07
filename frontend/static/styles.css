@@ -138,8 +138,8 @@ footer {
 #weather {
   cursor: pointer;
   text-decoration: underline;
-  margin-left: auto;
-  margin-right: auto;
+  margin-left: 100px;
+  margin-right: 100px;
 }
 
 #weather:hover {
@@ -454,3 +454,9 @@ button:hover .stars {
 }
 
 
+#weather-info {
+  font-size: 16px;
+  margin-left: 10px;
+  display: inline-block;
+  vertical-align: middle;
+}
