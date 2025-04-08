@@ -7,7 +7,7 @@ window.onload = function () {
   if (!messageShown) {
     // Get the animated message element from the DOM
     const messageDiv = document.getElementById("animated-message");
-    
+
     // Force a reflow to ensure any previously applied animation is reset
     void messageDiv.offsetWidth;
 
@@ -21,7 +21,6 @@ window.onload = function () {
     localStorage.setItem("messageShown", "true");
   }
 };
-
 
 // Declaring the global variables for map, markers, and UI states
 let map; // Google Map instance
@@ -40,7 +39,7 @@ const daySelect = document.getElementById("day-select"); // Get the day selectio
 const hourSelect = document.getElementById("hour-select"); // Get the hour selection dropdown element
 let now = new Date(); // Get the current date and time at the moment the page loads
 let currentHour = now.getHours(); // Extract the current hour (0 to 23) to determine which time slots have already passed today
-const BASE_URL = "http://127.0.0.1:8000";
+const BASE_URL = "http://108.129.235.108:8000";
 
 // Fetch API key from backend and dynamically load Google Maps API script
 fetch(`${BASE_URL}/api/config`)
@@ -468,7 +467,7 @@ function planJourney() {
     return;
   }
 
-  map.setCenter({lat: startLocation.lat, lng: startLocation.lon});
+  map.setCenter({ lat: startLocation.lat, lng: startLocation.lon });
   addJourneyLocationMarker("start", startLocation.lat, startLocation.lon);
   // mark destination location on the map
   addJourneyLocationMarker(
@@ -584,10 +583,10 @@ function addJourneyLocationMarker(type, lat, lng) {
 
 function clearJourneyLocationMarkers() {
   for (const marker of journeyMarkers) {
-    marker.setMap(null);        // Remove from map
+    marker.setMap(null); // Remove from map
   }
-  journeyMarkers = [];          // Clear the array
-  showJourneyMarkers = false;   // Optional: hide legend icons
+  journeyMarkers = []; // Clear the array
+  showJourneyMarkers = false; // Optional: hide legend icons
 }
 
 function initAutocomplete(field) {
@@ -620,7 +619,9 @@ function showWeatherInfo(location_name, lat, lon) {
     .then((response) => response.json())
     .then((data) => {
       if (!data) {
-        throw new Error("Invalid data format: Expected an object with a 'data' array");
+        throw new Error(
+          "Invalid data format: Expected an object with a 'data' array"
+        );
       }
 
       var iconUrl = `http://openweathermap.org/img/w/${data.weather[0].icon}.png`;
@@ -637,7 +638,6 @@ function showWeatherInfo(location_name, lat, lon) {
       console.error("Error fetching weather data:", error);
       weatherInfo.innerHTML = "<span style='color: red;'>Failed to load weather</span>";
     });
-
 }
 
 function updateLegend() {
