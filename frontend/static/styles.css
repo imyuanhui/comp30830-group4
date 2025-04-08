@@ -19,18 +19,20 @@ body {
 
 /* Top Bar */
 #top-bar {
-  width: 100%;
-  height: 4%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 40px;
   background-color: var(--background-color);
   color: var(--content-color);
-  padding: 15px 30px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  z-index: 10;
   position: fixed;
   top: 0;
   left: 0;
+  width: 100%;
+  max-width: 100vw;
+  box-sizing: border-box;
+  z-index: 10;
+  overflow-x: hidden;
 }
 
 #top-bar-left,
@@ -47,6 +49,8 @@ body {
 
 #top-bar-right {
   justify-content: flex-end;
+  flex-shrink: 0;
+  max-width: 120px;
 }
 
 .db-image {
@@ -118,6 +122,8 @@ body {
   flex-grow: 1;
   height: 100%;
   width: 100%;
+  padding-right: 40px; 
+  background-color: var(--background-color);
 }
 
 #map {
@@ -138,8 +144,8 @@ footer {
 #weather {
   cursor: pointer;
   text-decoration: underline;
-  margin-left: 100px;
-  margin-right: 100px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 #weather:hover {
@@ -237,8 +243,7 @@ footer {
   position: relative;
   width: 100px;
   height: 36px;
-  margin-left: auto;
-  margin-right: 110px; /* Adjust this value to move it closer to the right edge */
+  margin: 0;
   overflow: hidden;
 }
 
@@ -447,16 +452,8 @@ button:hover .stars {
 }
 
 #bike-gif-container img {
-  width: 180px; /* Set the width of the circular image */
-  height: 105px; /* Set the height of the circular image */
-  border-radius: 35%; /* Makes the image circular */
-  object-fit: cover; /* Ensures the image covers the circular area without stretching */
-}
-
-
-#weather-info {
-  font-size: 16px;
-  margin-left: 10px;
-  display: inline-block;
-  vertical-align: middle;
+  width: 180px;
+  height: 105px;
+  border-radius: 35%;
+  object-fit: cover;
 }

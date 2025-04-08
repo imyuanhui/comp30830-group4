@@ -87,6 +87,7 @@ function getMyLocation(map) {
         lng: longitude,
       };
 
+      showWeatherInfo('Your Location: ', latitude, longitude);
       map.setCenter(userLocation);
       map.setZoom(14);
       showUserLocation = true;
@@ -404,6 +405,8 @@ function setNowAsDefaultTime() {
 // Setup when DOM is ready
 document.addEventListener("DOMContentLoaded", () => {
   setupModeToggle();
+  // Use Dublin center as default weather 
+  showWeatherInfo('Dublin City Center', 53.3409, -6.2625);
   setupDaySelector();
   setupTimeToggle();
   setNowAsDefaultTime();
@@ -455,6 +458,7 @@ function updateMarkers() {
 }
 
 function planJourney() {
+  // todo: change the API call if the journey is leave now
   const day = document.getElementById("day-select").value;
   const hour = document.getElementById("hour-select").value;
 
@@ -472,8 +476,11 @@ function planJourney() {
     destinationLocation.lon
   );
 
+  const unixTimestamp = toUnixTimestamp(day, hour);
+  console.log(`API Call link: ${BASE_URL}/api/plan-journey?start_lat=${startLocation.lat}&start_lon=${startLocation.lon}&dest_lat=${destinationLocation.lat}&dest_lon=${destinationLocation.lon}&timestamp=${unixTimestamp}`)
+
   fetch(
-    `${BASE_URL}/api/plan-journey?start_lat=${startLocation.lat}&start_lon=${startLocation.lon}&dest_lat=${destinationLocation.lat}&dest_lon=${destinationLocation.lon}`
+    `${BASE_URL}/api/plan-journey?start_lat=${startLocation.lat}&start_lon=${startLocation.lon}&dest_lat=${destinationLocation.lat}&dest_lon=${destinationLocation.lon}&timestamp=${unixTimestamp}`
   )
     .then((response) => response.json())
     .then((data) => {
@@ -489,6 +496,12 @@ function planJourney() {
     .catch((error) => {
       console.error("Error sending journey data:", error);
     });
+}
+
+function toUnixTimestamp(day, hour) {
+  const dateTimeString = `${day}T${hour}:00`; // add seconds for full ISO string
+  const date = new Date(dateTimeString);      // parse as local time
+  return Math.floor(date.getTime() / 1000);   // convert ms to seconds
 }
 
 function highlightJourneyStations(startId, destId) {
@@ -600,18 +613,8 @@ function initAutocomplete(field) {
   });
 }
 
-let weatherTimeout; // Store the timeout reference
-
-function showWeatherPrompt(lat, lon) {
-  let weatherInfo = document.getElementById("weather-info");
-
-  // If weather is already visible, clear it and reset
-  if (weatherInfo.innerHTML.trim() !== "") {
-    clearTimeout(weatherTimeout);
-    weatherInfo.innerHTML = "";
-    return;
-  }
-
+function showWeatherInfo(location_name, lat, lon) {
+  const weatherInfo = document.getElementById("weather-info");
   fetch(`${BASE_URL}/api/weather/current?lat=${lat}&lon=${lon}`)
     .then((response) => response.json())
     .then((data) => {
@@ -626,28 +629,19 @@ function showWeatherPrompt(lat, lon) {
       var weatherDescription = data.weather[0].description;
 
       // Set the weather info inline in the top bar
-      weatherInfo.innerHTML = `<img src="${iconUrl}" alt="Weather Icon" style="width: 25px; vertical-align: middle; margin-left: 10px;"> 
+      weatherInfo.innerHTML = 
+        `${location_name}:<img src="${iconUrl}" alt="Weather Icon" style="width: 25px; vertical-align: middle; margin-left: 10px;"> 
          <span style="font-weight: bold; color: #aee0ed; margin-left: 5px;">${temp}°C (${weatherDescription})</span>`;
 
-      // Auto-hide after 3 seconds
-      weatherTimeout = setTimeout(() => {
-        weatherInfo.innerHTML = "";
-      }, 3000);
     })
     .catch((error) => {
       console.error("Error fetching weather data:", error);
-      weatherInfo.innerHTML =
-        "<span style='color: red;'>Failed to load weather</span>";
-
-      // Hide error message after 3 seconds
-      weatherTimeout = setTimeout(() => {
-        weatherInfo.innerHTML = "";
-      }, 3000);
+      weatherInfo.innerHTML = "<span style='color: red;'>Failed to load weather</span>";
     });
 }
 
 function updateLegend() {
-  const legends = document.getElementsByClassName("legend"); // 回傳的是多個元素
+  const legends = document.getElementsByClassName("legend");
 
   const content = `
     <h4>Legend</h4>
