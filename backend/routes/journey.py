@@ -35,7 +35,7 @@ def plan_journey():
     - Error message if no suitable stations are found.
 
     Example API Request:
-        GET api/plan-journey?start_lat=53.3559067&start_lon=-6.2581812&dest_lat=53.3489189&dest_lon=-6.2612181
+        GET /api/plan-journey?start_lat=53.3559067&start_lon=-6.2581812&dest_lat=53.3489189&dest_lon=-6.2612181&timestamp=1744108800
 
     Example Response:
         {
