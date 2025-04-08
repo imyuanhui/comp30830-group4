@@ -382,6 +382,7 @@ function setNowAsDefaultTime() {
   hourSelect.disabled = true;
 }
 
+
 // ================= Journey Planning =================
 // Set up Google Places Autocomplete for input fields
 function initAutocomplete(field) {
@@ -428,6 +429,7 @@ function planJourney() {
     destinationLocation.lon
   );
 
+
   // build journey API URL
   let url = `${BASE_URL}/api/plan-journey?start_lat=${startLocation.lat}&start_lon=${startLocation.lon}&dest_lat=${destinationLocation.lat}&dest_lon=${destinationLocation.lon}`;
   // If mode is ‘right now’, omit timestamp from API
@@ -453,6 +455,7 @@ function planJourney() {
       console.error("Error sending journey data:", error);
     });
 }
+
 
 // Highlight the markers for start and destination stations
 function highlightJourneyStations(startId, destId) {
