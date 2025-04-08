@@ -39,7 +39,7 @@ const daySelect = document.getElementById("day-select"); // Get the day selectio
 const hourSelect = document.getElementById("hour-select"); // Get the hour selection dropdown element
 let now = new Date(); // Get the current date and time at the moment the page loads
 let currentHour = now.getHours(); // Extract the current hour (0 to 23) to determine which time slots have already passed today
-const BASE_URL = "http://108.129.235.108:8000";
+const BASE_URL = "http://52.18.197.203:8000";
 
 // Fetch API key from backend and dynamically load Google Maps API script
 fetch(`${BASE_URL}/api/config`)
@@ -87,7 +87,7 @@ function getMyLocation(map) {
         lng: longitude,
       };
 
-      showWeatherInfo('Your Location: ', latitude, longitude);
+      showWeatherInfo("Your Location: ", latitude, longitude);
       map.setCenter(userLocation);
       map.setZoom(14);
       showUserLocation = true;
@@ -405,8 +405,8 @@ function setNowAsDefaultTime() {
 // Setup when DOM is ready
 document.addEventListener("DOMContentLoaded", () => {
   setupModeToggle();
-  // Use Dublin center as default weather 
-  showWeatherInfo('Dublin City Center', 53.3409, -6.2625);
+  // Use Dublin center as default weather
+  showWeatherInfo("Dublin City Center", 53.3409, -6.2625);
   setupDaySelector();
   setupTimeToggle();
   setNowAsDefaultTime();
@@ -477,7 +477,9 @@ function planJourney() {
   );
 
   const unixTimestamp = toUnixTimestamp(day, hour);
-  console.log(`API Call link: ${BASE_URL}/api/plan-journey?start_lat=${startLocation.lat}&start_lon=${startLocation.lon}&dest_lat=${destinationLocation.lat}&dest_lon=${destinationLocation.lon}&timestamp=${unixTimestamp}`)
+  console.log(
+    `API Call link: ${BASE_URL}/api/plan-journey?start_lat=${startLocation.lat}&start_lon=${startLocation.lon}&dest_lat=${destinationLocation.lat}&dest_lon=${destinationLocation.lon}&timestamp=${unixTimestamp}`
+  );
 
   fetch(
     `${BASE_URL}/api/plan-journey?start_lat=${startLocation.lat}&start_lon=${startLocation.lon}&dest_lat=${destinationLocation.lat}&dest_lon=${destinationLocation.lon}&timestamp=${unixTimestamp}`
@@ -500,8 +502,8 @@ function planJourney() {
 
 function toUnixTimestamp(day, hour) {
   const dateTimeString = `${day}T${hour}:00`; // add seconds for full ISO string
-  const date = new Date(dateTimeString);      // parse as local time
-  return Math.floor(date.getTime() / 1000);   // convert ms to seconds
+  const date = new Date(dateTimeString); // parse as local time
+  return Math.floor(date.getTime() / 1000); // convert ms to seconds
 }
 
 function highlightJourneyStations(startId, destId) {
@@ -629,14 +631,13 @@ function showWeatherInfo(location_name, lat, lon) {
       var weatherDescription = data.weather[0].description;
 
       // Set the weather info inline in the top bar
-      weatherInfo.innerHTML = 
-        `${location_name}:<img src="${iconUrl}" alt="Weather Icon" style="width: 25px; vertical-align: middle; margin-left: 10px;"> 
+      weatherInfo.innerHTML = `${location_name}:<img src="${iconUrl}" alt="Weather Icon" style="width: 25px; vertical-align: middle; margin-left: 10px;"> 
          <span style="font-weight: bold; color: #aee0ed; margin-left: 5px;">${temp}°C (${weatherDescription})</span>`;
-
     })
     .catch((error) => {
       console.error("Error fetching weather data:", error);
-      weatherInfo.innerHTML = "<span style='color: red;'>Failed to load weather</span>";
+      weatherInfo.innerHTML =
+        "<span style='color: red;'>Failed to load weather</span>";
     });
 }
 
