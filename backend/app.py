@@ -9,7 +9,8 @@ from routes import register_blueprints  # Import the function that registers Blu
 load_dotenv()
 
 # Global variable to store the model in memory
-model = None
+bike_model = None
+stand_model = None
 
 app = Flask(__name__, static_folder='../frontend/static')
 CORS(app)

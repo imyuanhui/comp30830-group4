@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
-from services import get_all_stations, predict_availability_status
+from services import get_all_stations, predict_availability
 from utils import haversine
+from services import get_weather_by_coordinate
 
 journey_bp = Blueprint("journey", __name__)
 
@@ -90,8 +91,14 @@ def plan_journey():
     # If `timestamp` is provided, use prediction model for future bike availability
     if "timestamp" in params:
         try:
+            # get temp info
+            # TODO: GET FUTURE WEATHER INFO
+            # res = get_weather_by_coordinate(start_lat, start_lon)
+            temp = 14
+
             for s in start_nearby[:]:  # Copy the list to avoid modifying it while iterating
-                if predict_availability_status(s["id"], params["timestamp"]) != "sufficient":
+                s["predicted_bike_availability"] = int(predict_availability(s["id"], params["timestamp"], temp))
+                if s["predicted_bike_availability"] <= 0:
                     start_nearby.remove(s)
 
             # Select the best start station based on proximity
@@ -101,6 +108,12 @@ def plan_journey():
                 default=None
             )
 
+            for s in dest_nearby[:]:
+                s["predicted_stand_availability"] = int(predict_availability(s["id"], params["timestamp"], temp, "stand"))
+                if s["predicted_stand_availability"] <= 0:
+                    dest_nearby.remove(s)
+
+            # Select the best destination station based on proximity
             dest_station = min(
                 (s for s in dest_nearby),
                 key=lambda s: haversine(dest_lat, dest_lon, s["lat"], s["lon"]),
@@ -132,5 +145,5 @@ def plan_journey():
     # Return the best start and destination station
     return jsonify({
         "start_station": start_station,
-        "destination_station": dest_station
+        "destination_station": dest_station,
     })
