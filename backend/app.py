@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, send_from_directory
 from dotenv import load_dotenv
 from flask_cors import CORS
 import os
@@ -8,9 +8,14 @@ from routes import register_blueprints  # Import the function that registers Blu
 # Load environment variables
 load_dotenv()
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='../frontend/static')
 CORS(app)
 register_blueprints(app) # Register Blueprints
+
+# Serve the frontend (HTML, JS, CSS) from Flask
+@app.route('/')
+def serve_frontend():
+    return send_from_directory('../frontend', 'index.html')  # Serve index.html as the main page
 
 # Ensure database connections are properly closed
 @app.teardown_appcontext
