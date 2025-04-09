@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from services import get_all_stations, predict_availability
 from utils import haversine
-from services import get_weather_by_coordinate
+from services import get_weather_by_coordinate_time
 
 journey_bp = Blueprint("journey", __name__)
 
@@ -91,10 +91,10 @@ def plan_journey():
     # If `timestamp` is provided, use prediction model for future bike availability
     if "timestamp" in params:
         try:
-            # get temp info
-            # TODO: GET FUTURE WEATHER INFO
-            # res = get_weather_by_coordinate(start_lat, start_lon)
-            temp = 14
+            # Get Temperature
+            temp = get_weather_by_coordinate_time(53.3476,-6.2637,params["timestamp"])["data"]["temp"]
+            if temp is None:
+                temp = 14
 
             for s in start_nearby[:]:  # Copy the list to avoid modifying it while iterating
                 s["predicted_bike_availability"] = int(predict_availability(s["id"], params["timestamp"], temp))
