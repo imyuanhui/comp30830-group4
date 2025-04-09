@@ -53,11 +53,11 @@ def get_weather_by_coordinate_time(lat=53.3476,lon=-6.2637,timestamp=1744108800)
     # If the request is successful (status code 200), return the current weather data
     if res.status_code == 200:
         data = res.json()["data"][0]
-        print(data)
         temp = data["temp"]
         icon = data["weather"][0]["icon"]
         description = data["weather"][0]["description"]
         print(temp, icon)
+
         return {
             "status": res.status_code,
             "data": {"temp": temp, "icon": icon, "description": description}
