@@ -56,10 +56,11 @@ def get_weather_by_coordinate_time(lat=53.3476,lon=-6.2637,timestamp=1744108800)
         print(data)
         temp = data["temp"]
         icon = data["weather"][0]["icon"]
+        description = data["weather"][0]["description"]
         print(temp, icon)
         return {
             "status": res.status_code,
-            "data": {"temp": temp, "icon": icon}
+            "data": {"temp": temp, "icon": icon, "description": description}
         }
     else:
         # If the request fails, return only the status code
