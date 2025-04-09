@@ -5,53 +5,41 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dublin Bikes</title>
-
-  <!-- Link to external CSS file for styling -->
   <link rel="stylesheet" href="./static/styles.css" />
-
-  <!-- Link to external JavaScript file with defer attribute to ensure execution after HTML parsing -->
   <script src="./static/index.js" defer></script>
-
-  <!-- Google Charts library for data visualization -->
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 </head>
 
 <body>
-
-  <!-- <div id="animated-message">
-    <img src="./static/assets/bikegif.gif" alt="Moving Bicycle" style="width: 50px; height: 50px; margin-right: 10px;">
-    Ride a Bike, Save the Planet & Stay Fit!
-  </div> -->
-  
-
-  <!-- Top bar containing title, logo, weather information, and mode toggle -->
+  <!-- Top bar -->
   <div id="top-bar">
+    <!-- Logo and title -->
     <div id="top-bar-left">
       <h1>
         Dublin Bikes
         <img src="./static/assets/bike_gif.gif" alt="Dublin Bikes Logo" class="db-image" />
       </h1>
     </div>
-    
+
+    <!-- Weather display -->
     <div id="top-bar-center">
-      <!-- <span id="weather" onclick="showWeatherPrompt(53.3409, -6.2625)">Weather Information ☁️</span> -->
-      <span id="weather-info"></span> <!-- Added this to display weather inline -->
+      <span id="weather-info"></span>
     </div>
-    
+
+    <!-- Toggle switch -->
     <div id="top-bar-right">
       <div id="bike-slot-toggle">
-        <input type="checkbox" class="checkbox" id="modeSwitch" />
+        <input type="checkbox" class="checkbox" id="modeToggle" />
         <div class="knobs"></div>
         <div class="layer"></div>
       </div>
     </div>
-    
   </div>
 
-  <!-- Main container holds the sidebar and map -->
+  <!-- Main layout: sidebar and map -->
   <div id="main-container">
     <div id="sidebar">
-      <!-- Journey Form Panel for user input -->
+      <!-- Journey input -->
       <div id="journey-form-panel">
         <label>Please enter your starting location:</label>
         <input type="text" id="start-location" placeholder="Enter a starting location..." autocomplete="off" />
@@ -66,10 +54,10 @@
         </div>
         <div class="radio-option">
           <input type="radio" id="mode-future" name="timeMode" value="future" />
-          <label for="mode-future">Plan ahead</label>
+          <label for="mode-future">Plan ahead *</label>
         </div>
 
-        <!-- Only shown if user selects "Plan ahead" -->
+        <!-- Travel day & time (enabled only when planning ahead) -->
         <label id="day-label" for="day-select" class="disabled-label">Travel day:</label>
         <select id="day-select" disabled>
           <option value="" selected disabled>Choose your day</option>
@@ -80,38 +68,43 @@
           <option value="" selected disabled>Choose your time</option>
         </select>
 
-        <!-- Button to plan the journey -->
+        <!-- Prediction note -->
+        <p id="prediction-note" class="note">
+          * Showing predicted data
+        </p>
+
+        <!-- Journey planning button -->
         <button onclick="planJourney()">Plan Your Journey <span class="stars"></span> </button>
+        <!-- Legend for station icons -->
         <div class="legend"></div>
       </div>
 
-
-
-      <!-- Journey Result Panel (initially hidden) -->
+      <!-- Journey result -->
       <div id="journey-result-panel" style="display: none">
         <div id="results-content">
           <!-- Journey results will be injected here -->
         </div>
-
-        <!-- Button to return to the journey form -->
         <button onclick="goBackToForm()">← Back</button>
       </div>
     </div>
 
-    <!-- Map container to display bike station-->
+    <!-- Map container -->
     <div id="map-container">
       <div id="map"></div>
     </div>
-    
   </div>
 
-  <!-- Footer with team information -->
+  <!-- Footer -->
   <footer>
     <p>Pedal your way to a cleaner and greener city.</p>
     <p>Created by Wan-Hua Hsieh, Prakhar Dayal, and Yuanhui Xu (Group 4)</p>
     <p>UCD Dublin</p>
   </footer>
 
+  <!-- Bike GIF -->
+  <div id="bike-gif-container">
+    <img src="./static/assets/bike_gif.gif" alt="Bike GIF" />
+  </div>
 
 </body>
 

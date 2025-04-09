@@ -1,13 +1,13 @@
+/* === Color & Theme Variables === */
 :root {
-  --bike-color: #71BF8D;
-  --stand-color: #F7CE68;
-  --background-color: #21384e;;  
-  --content-color:white;
+  --bike-color: #71bf8d;
+  --stand-color: #f7ce68;
+  --background-color: #21384e;
+  --content-color: white;
   --button-color: rgb(1, 28, 41);
 }
 
-
-
+/* === Base Styles === */
 body {
   margin: 0;
   font-family: Arial, sans-serif;
@@ -17,7 +17,7 @@ body {
   background-color: #f4f4f4;
 }
 
-/* Top Bar */
+/* === Top Navigation Bar === */
 #top-bar {
   display: flex;
   align-items: center;
@@ -42,6 +42,14 @@ body {
   align-items: center;
 }
 
+#top-bar-left h1 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 20px 0 0;
+  font-size: 28px;
+}
+
 #top-bar-center {
   flex-grow: 1;
   justify-content: center;
@@ -54,9 +62,9 @@ body {
 }
 
 .db-image {
-  width: 40px; /* Increased width */
-  height: 30px; /* Kept the height same */
-  border-radius: 15px; /* Adjusted for an oval shape */
+  width: 40px;
+  height: 30px;
+  border-radius: 15px;
   margin-left: 6px;
   vertical-align: middle;
   object-fit: contain;
@@ -64,181 +72,7 @@ body {
   border: 1.5px solid #ccc;
 }
 
-#top-bar h1 {
-  font-size: 28px;
-  margin: 0 20px 0 0;
-}
-
-/* Main container */
-#main-container {
-  display: flex;
-  flex-grow: 1;
-  height: 100vh;
-  padding-top: 60px;
-  width: 100vw;
-  overflow: hidden;
-}
-
-/* Sidebar */
-#sidebar {
-  background-color: rgba(3, 33, 61, 0.95); /* subtle transparency */
-  width: 400px;
-  background-color: var(--background-color);
-  color: var(--content-color);
-  padding: 30px 40px;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  box-sizing: border-box;
-  overflow-y: auto;
-}
-
-#sidebar label:not(.radio-option) {
-  margin-bottom: 8px;
-  display: block;
-}
-
-#sidebar input,
-#sidebar select,
-#sidebar button {
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  margin-bottom: 20px;
-  padding: 10px 15px;
-  border-radius: 5px;
-  border: none;
-  font-size: 16px;
-}
-
-#sidebar button {
-  background-color: var(--button-color);
-  color: var(--content-color);
-  cursor: pointer;
-}
-
-/* Map styling */
-#map-container {
-  flex-grow: 1;
-  height: 100%;
-  width: 100%;
-  padding-right: 40px; 
-  background-color: var(--background-color);
-}
-
-#map {
-  width: 100%;
-  height: 100%;
-}
-
-footer {
-  background-color: var(--background-color);
-  color: var(--content-color);
-  text-align: center;
-  padding: 10px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-/* Clickable weather */
-#weather {
-  cursor: pointer;
-  text-decoration: underline;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-#weather:hover {
-  color: #aee0ed;
-  text-shadow: 0 0 5px #71BF8D;
-  transition: all 0.3s ease;
-}
-
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  #main-container {
-    flex-direction: column;
-    height: auto;
-  }
-
-  #sidebar {
-    width: 100%;
-    height: auto;
-    padding: 20px;
-  }
-
-  #map-container {
-    height: 400px;
-  }
-
-  #top-bar h1 {
-    font-size: 24px;
-  }
-}
-
-@media (max-width: 480px) {
-  #top-bar {
-    padding: 10px;
-    font-size: 14px;
-  }
-
-  #top-bar h1 {
-    font-size: 20px;
-  }
-
-  #sidebar input,
-  #sidebar select,
-  #sidebar button {
-    font-size: 14px;
-  }
-}
-
-.modal {
-  display: none; /* Hidden by default */
-  position: fixed;
-  z-index: 1; /* Sit on top */
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  overflow: auto; /* Enable scroll if needed */
-  background-color: rgb(0, 0, 0); /* Fallback color */
-  background-color: rgba(0, 0, 0, 0.4); /* Black with opacity */
-  padding-top: 60px;
-}
-
-.modal-content {
-  background-color: #fefefe;
-  margin: 5% auto;
-  padding: 20px;
-  border: 1px solid #888;
-  width: 80%;
-}
-
-.modal-weather {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  font-family: "Times New Roman", Times, serif;
-  font-size: 1rem;
-}
-
-.close {
-  color: #aaa;
-  float: right;
-  font-size: 28px;
-  font-weight: bold;
-}
-
-.close:hover,
-.close:focus {
-  color: black;
-  text-decoration: none;
-  cursor: pointer;
-}
-
+/* === Bike/Stand Toggle Switch === */
 #bike-slot-toggle {
   position: relative;
   width: 100px;
@@ -246,7 +80,6 @@ footer {
   margin: 0;
   overflow: hidden;
 }
-
 
 #bike-slot-toggle .checkbox {
   width: 100%;
@@ -279,7 +112,7 @@ footer {
   content: "Stand";
   color: black;
   left: 44px;
-  background-color:var(--stand-color);
+  background-color: var(--stand-color);
   box-shadow: 0 0 12px var(--stand-color);
 }
 
@@ -292,48 +125,57 @@ footer {
   position: absolute;
 }
 
-
-.legend {
-  margin-top: 20px;
-  padding-top: 10px;
-  border-top: 1px solid #ccc;
-  font-size: 14px;
-  color: white;
-}
-
-.legend ul {
-  list-style: none;
-  padding: 0;
-}
-
-.legend li {
+/* === Main Content Layout (Sidebar + Map) === */
+#main-container {
   display: flex;
-  align-items: center;
-  margin-bottom: 8px;
+  flex-grow: 1;
+  height: 100vh;
+  padding-top: 60px;
+  width: 100vw;
+  overflow: hidden;
 }
 
-.legend img {
-  width: 40px;
-  height: 40px;
-  margin-right: 10px;
+/* === Sidebar Panel (Journey Form) === */
+.note {
+  font-size: 13px;
+  color: #cccccc;
+  margin-top: 4px;
+  margin-bottom: 16px;
+  padding-left: 2px;
 }
 
-#time-mode {
+#sidebar {
+  background-color: rgba(3, 33, 61, 0.95); /* subtle transparency */
+  width: 400px;
+  background-color: var(--background-color);
+  color: var(--content-color);
+  padding: 30px 40px;
   display: flex;
   flex-direction: column;
-  
+  height: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
 }
 
-.radio-option {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  width: fit-content; 
-  white-space: nowrap;
+#sidebar label:not(.radio-option) {
+  margin-bottom: 8px;
+  display: block;
 }
 
+#sidebar input,
+#sidebar select,
+#sidebar button {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 20px;
+  padding: 10px 15px;
+  border-radius: 5px;
+  border: none;
+  font-size: 16px;
+}
 
-
+/* === Button Styling === */
 button {
   position: relative;
   background-color: var(--button-color);
@@ -354,7 +196,6 @@ button:hover {
   box-shadow: 0 6px 15px rgba(255, 255, 255, 0.6);
 }
 
-/* Star sparkles */
 .stars {
   position: absolute;
   top: 50%;
@@ -406,23 +247,15 @@ button:hover .stars {
   }
 }
 
-
-/* Animated Message (One-Time Animation) */
-#animated-message {
-  position: fixed;
-  top: 50%;
-  left: -100%; /* Start off-screen */
-  transform: translateY(-50%); /* Keep it vertically centered */
-  font-size: 24px;
-  font-weight: bold;
-  color: #fff;
-  background-color: #71BF8D;
-  padding: 20px;
-  border-radius: 10px;
-  z-index: 1000;
-  opacity: 1; /* Fully visible at the start */
-  white-space: nowrap; /* Prevent text from wrapping */
-  animation: moveAndFade 12s ease-in-out forwards; /* Slower animation duration */
+.prediction-warning {
+  background: rgba(133, 197, 255, 0.15); /* 淡藍、透明背景 */
+  border-left: 4px solid #6ec1ff;
+  color: #b5dbff;
+  padding: 12px 16px;
+  margin: 20px 0;
+  border-radius: 8px;
+  font-size: 0.9em;
+  box-shadow: 0 0 10px rgba(110, 193, 255, 0.1);
 }
 
 @keyframes moveAndFade {
@@ -441,3 +274,129 @@ button:hover .stars {
     transform: translateY(-50%) translateX(50%); /* Keep vertically centered but move off-screen */
   }
 }
+
+/* === Radio Option (Date & Time Mode) === */
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  white-space: nowrap;
+}
+
+/* === Legend Section === */
+.legend {
+  margin-top: 20px;
+  padding-top: 10px;
+  border-top: 1px solid #ccc;
+  font-size: 14px;
+  color: white;
+}
+
+.legend ul {
+  list-style: none;
+  padding: 0;
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.legend img {
+  width: 40px;
+  height: 40px;
+  margin-right: 10px;
+}
+
+/* === Map Display Area === */
+#map-container {
+  flex-grow: 1;
+  height: 100%;
+  width: 100%;
+  padding-right: 40px;
+  box-sizing: border-box;
+  background-color: var(--background-color);
+}
+
+#map {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+/* === Footer === */
+footer {
+  background-color: var(--background-color);
+  color: var(--content-color);
+  text-align: center;
+  padding: 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* === Animated Bike GIF (Bottom Right) === */
+#bike-gif-container {
+  position: fixed;
+  right: 40px;
+  bottom: 20px;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+#bike-gif-container img {
+  width: 12vw;
+  max-width: 120px;
+  min-width: 60px;
+  height: auto;
+  border-radius: 30%;
+  object-fit: cover;
+  opacity: 0.95;
+}
+
+/* === Responsive: Tablet View (≤768px) === */
+@media (max-width: 768px) {
+  #main-container {
+    flex-direction: column;
+    height: auto;
+  }
+
+  #bike-gif-container {
+    display: none;
+  }
+
+  #map-container {
+    height: 90vh;
+    padding: 10px 20px;
+  }
+
+  #sidebar {
+    width: 100%;
+    height: auto;
+    padding: 20px;
+  }
+
+  #top-bar h1 {
+    font-size: 24px;
+  }
+}
+
+/* === Responsive: Mobile View (≤480px) === */
+@media (max-width: 480px) {
+  #top-bar {
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  #top-bar h1 {
+    font-size: 20px;
+  }
+
+  #sidebar input,
+  #sidebar select,
+  #sidebar button {
+    font-size: 14px;
+  }
+}
+

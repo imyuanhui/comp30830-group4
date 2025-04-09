@@ -1,58 +1,40 @@
-// Wait until the entire page (images, stylesheets, etc.) is fully loaded
-window.onload = function () {
-  // Check if the animated message has already been shown to the user
-  const messageShown = localStorage.getItem("messageShown");
+// ================= Global State & Config =================
+let map; // Google Maps instance
+let markers = []; // All bike station markers
+let journeyMarkers = []; // Markers for start/destination of planned journey
 
-  // If the message has not been shown before
-  if (!messageShown) {
-    // Get the animated message element from the DOM
-    const messageDiv = document.getElementById("animated-message");
+let startLocation = null;
+let destinationLocation = null;
+let showUserLocation = false; // Whether the user's current location is shown on the map
+let showJourneyMarkers = false; // Whether the planned journey markers are currently displayed
+let activeInfoWindow = null; // The currently open InfoWindow (used to close others when a new one opens)
+let currentMode = "bike"; // "bike" or "stand" - determines which availability type is shown
 
-    // Force a reflow to ensure any previously applied animation is reset
-    void messageDiv.offsetWidth;
+const bikeMarkerColor = "#71BF8D"; // Marker color for bike availability
+const standMarkerColor = "#F7CE68"; // Marker color for stand availability
 
-    // Make sure the message is visible (was hidden with CSS `display: none`)
-    messageDiv.style.display = "block";
+const daySelect = document.getElementById("day-select"); // <select> dropdown for travel day
+const hourSelect = document.getElementById("hour-select"); // <select> dropdown for travel hour
 
-    // Add the 'animate' class to trigger the CSS animation
-    messageDiv.classList.add("animate");
+const BASE_URL = "http://127.0.0.1:8000"; // Backend API base URL
 
-    // Store a flag in localStorage so the animation won't show again
-    localStorage.setItem("messageShown", "true");
-  }
-};
+// ================= Initialization =================
+// Load the Google Maps API dynamically and initialize the map
+function loadGoogleMapsAPI() {
+  fetch(`${BASE_URL}/api/config`)
+    .then((response) => response.json())
+    .then((config) => {
+      const script = document.createElement("script");
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${config.GOOGLE_MAPS_API_KEY}&libraries=places&callback=initMap`;
+      script.async = true;
+      document.head.appendChild(script);
+    })
+    .catch((error) =>
+      console.error("Failed to load Google Maps API Key:", error)
+    );
+}
 
-// Declaring the global variables for map, markers, and UI states
-let map; // Google Map instance
-let showUserLocation = false;
-let showJourneyMarkers = false;
-let journeyMarkers = [];
-let markers = []; // Array to store station markers
-let stationsVisible = true; // Toggle visibility of stations
-let currentMode = "bike"; // Default mode: 'bike', can be toggled to 'stand'
-let activeInfoWindow = null; // Track currently open InfoWindow
-let bikeColor = "#71BF8D"; // Color for bike availability markers
-let bikeLabelColor = "black"; // Label color for bike markers
-let standColor = "#F7CE68"; // Color for bike stand availability markers
-let standLabelColor = "black"; // Label color for stand markers
-const daySelect = document.getElementById("day-select"); // Get the day selection dropdown element
-const hourSelect = document.getElementById("hour-select"); // Get the hour selection dropdown element
-let now = new Date(); // Get the current date and time at the moment the page loads
-let currentHour = now.getHours(); // Extract the current hour (0 to 23) to determine which time slots have already passed today
-const BASE_URL = "http://108.129.235.108:8000";
-
-// Fetch API key from backend and dynamically load Google Maps API script
-fetch(`${BASE_URL}/api/config`)
-  .then((response) => response.json())
-  .then((config) => {
-    const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${config.GOOGLE_MAPS_API_KEY}&libraries=places&callback=initMap`;
-    script.async = true;
-    document.head.appendChild(script);
-  })
-  .catch((error) => console.error("Failed to load API Key:", error));
-
-// Initialize Google Maps and set up event listeners
+// Initialize map, center on Dublin, and set up autocomplete inputs
 function initMap() {
   console.log("Map initialized");
   const dublin = { lat: 53.3498, lng: -6.2603 }; // Default map center
@@ -70,7 +52,7 @@ function initMap() {
   initAutocomplete("destination");
 }
 
-// Get and display user's current location
+// Get the user's current location and center the map on it
 function getMyLocation(map) {
   if (!navigator.geolocation) {
     alert("Your browser doesn't support Geolocation.");
@@ -87,7 +69,7 @@ function getMyLocation(map) {
         lng: longitude,
       };
 
-      showWeatherInfo('Your Location: ', latitude, longitude);
+      showWeatherInfo("Your Location: ", latitude, longitude);
       map.setCenter(userLocation);
       map.setZoom(14);
       showUserLocation = true;
@@ -109,9 +91,9 @@ function getMyLocation(map) {
   );
 }
 
-// Fetch station data and add markers to the map
+// ================= Station Markers =================
+// Fetch station list from backend and create markers on map
 function getStations() {
-  //todo: The availability info should retrieve directly from API response, only the data for chart is from database
   fetch(`${BASE_URL}/api/stations`)
     .then((response) => response.json())
     .then((data) => {
@@ -127,117 +109,108 @@ function getStations() {
     });
 }
 
-// Create and configure markers for each station
+// Create a marker and InfoWindow for each station
 function addMarkers(stations) {
-  console.log(stations);
-  // Create a marker for each station
   for (const station of stations) {
-    const marker = new google.maps.Marker({
-      position: {
-        lat: parseFloat(station.lat),
-        lng: parseFloat(station.lon),
-      },
-      map: map,
-      title: station.name,
-      station_number: station.id,
-      station_data: station,
-    });
-
+    const marker = createStationMarker(station);
     setMarkerStyle(marker);
 
-    // Create an InfoWindow with station details
     const defaultContent = `
-            <div>
-                <h3>${station.name}</h3>
-                <p><strong>Available Bikes:</strong> ${
-                  station.details.available_bikes || "N/A"
-                }</p>
-                <p><strong>Available Bike Stands:</strong> ${
-                  station.details.available_bike_stands || "N/A"
-                }</p>
-                <p><strong>Last Update Time:</strong> ${
-                  station.details.last_update || "N/A"
-                }</p>
-                <div id="chart_bike_${
-                  station.id
-                }" style="width: 300px; height: 200px;"></div>
-                <div id="chart_stands_${
-                  station.id
-                }" style="width: 300px; height: 200px;"></div>
-            </div>
-        `;
+      <div>
+        <h3>${station.name}</h3>
+        <p><strong>Available Bikes:</strong> ${
+          station.details.available_bikes || 0
+        }</p>
+        <p><strong>Available Bike Stands:</strong> ${
+          station.details.available_bike_stands || 0
+        }</p>
+        <p><strong>Last Update Time:</strong> ${
+          station.details.last_update || "N/A"
+        }</p>
+        <div id="chart_bike_${
+          station.id
+        }" style="width: 300px; height: 200px;"></div>
+        <div id="chart_stands_${
+          station.id
+        }" style="width: 300px; height: 200px;"></div>
+      </div>
+    `;
 
-    const infoWindow = new google.maps.InfoWindow({
-      content: defaultContent,
-    });
+    const infoWindow = new google.maps.InfoWindow({ content: defaultContent });
 
-    // Add click listener to show station details and weather info
-    marker.addListener("click", () => {
-      marker.setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
-
-      // Close the currently open InfoWindow, if any
-      if (activeInfoWindow) {
-        activeInfoWindow.close();
-      }
-
-      // Fetch real-time weather data for the station's location
-      fetch(
-        `${BASE_URL}/api/weather/current?lat=${parseFloat(
-          station.lat
-        )}&lon=${parseFloat(station.lon)}`
-      )
-        .then((response) => response.json())
-        .then((weather) => {
-          console.log(weather);
-          const icon_url =
-            "http://openweathermap.org/img/w/" +
-            weather.weather[0].icon +
-            ".png";
-          const temp = weather.temp;
-          const desp = weather.weather[0]["description"];
-          const content = `
-                        <div>
-                            <div class="modal-weather">
-                                <img src="${icon_url}" alt="Weather icon" />
-                                <span>${desp} ${temp}℃</span>
-                            </div>
-                            <h3>${station.name}</h3>
-                            <p><strong>Available Bikes:</strong> ${
-                              station.details.available_bikes || "N/A"
-                            }</p>
-                            <p><strong>Available Bike Stands:</strong> ${
-                              station.details.available_bike_stands || "N/A"
-                            }</p>
-                            <p><strong>Last Update Time:</strong> ${
-                              station.details.last_update || "N/A"
-                            }</p>
-                            <div id="chart_bike_${station.id}"></div>
-                            <div id="chart_stand_${station.id}"></div>
-                        </div>
-                    `;
-          infoWindow.setContent(content);
-          infoWindow.open(map, marker);
-
-          google.maps.event.addListenerOnce(infoWindow, "domready", () => {
-            drawStationChart(station);
-          });
-
-          // Set this InfoWindow as the active one
-          activeInfoWindow = infoWindow;
-        })
-        .catch((error) => {
-          console.error("Error fetching weather info:", error);
-          // Show default infoWindow content if fetch fails
-          infoWindow.setContent(defaultContent);
-          infoWindow.open(map, marker);
-          activeInfoWindow = infoWindow;
-        });
-    });
-
+    attachStationClickListener(marker, station, infoWindow, defaultContent);
     markers.push(marker);
   }
 }
 
+// Creates and returns a Google Maps marker for a bike station
+function createStationMarker(station) {
+  return new google.maps.Marker({
+    position: {
+      lat: parseFloat(station.lat),
+      lng: parseFloat(station.lon),
+    },
+    map: map,
+    title: station.name,
+    station_number: station.id,
+    station_data: station,
+  });
+}
+
+// Adds click listener to marker that opens an InfoWindow with live weather and station details
+function attachStationClickListener(
+  marker,
+  station,
+  infoWindow,
+  defaultContent
+) {
+  marker.addListener("click", () => {
+    marker.setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
+
+    if (activeInfoWindow) activeInfoWindow.close();
+
+    fetch(
+      `${BASE_URL}/api/weather/current?lat=${station.lat}&lon=${station.lon}`
+    )
+      .then((response) => response.json())
+      .then((weather) => {
+        const icon_url = `http://openweathermap.org/img/w/${weather.weather[0].icon}.png`;
+        const temp = weather.temp;
+        const desp = weather.weather[0].description;
+        const content = `
+          <div>
+            <img src="${icon_url}" alt="Weather icon" class="weather-icon" />
+            <h3>${station.name}</h3>
+            <p><strong>Weather:</strong> ${desp} ${temp}℃</p>
+            <p><strong>Available Bikes:</strong> ${
+              station.details.available_bikes || 0
+            }</p>
+            <p><strong>Available Bike Stands:</strong> ${
+              station.details.available_bike_stands || 0
+            }</p>
+            <p><strong>Last Update Time:</strong> ${
+              station.details.last_update || "N/A"
+            }</p>
+            <div id="chart_bike_${station.id}"></div>
+            <div id="chart_stand_${station.id}"></div>
+          </div>
+        `;
+        infoWindow.setContent(content);
+        infoWindow.open(map, marker);
+        google.maps.event.addListenerOnce(infoWindow, "domready", () => {
+          drawStationChart(station);
+        });
+        activeInfoWindow = infoWindow;
+      })
+      .catch(() => {
+        infoWindow.setContent(defaultContent);
+        infoWindow.open(map, marker);
+        activeInfoWindow = infoWindow;
+      });
+  });
+}
+
+// Draw historical availability charts (24hr) for bikes and stands
 function drawStationChart(station) {
   fetch(`${BASE_URL}/api/stations/history/demo/${station.id}`)
     .then((response) => response.json())
@@ -282,13 +255,13 @@ function drawStationChart(station) {
           const bikeOptions = {
             ...baseChartOptions,
             title: "🚲 24-Hour Bike Availability",
-            colors: [bikeColor],
+            colors: [bikeMarkerColor],
           };
 
           const standOptions = {
             ...baseChartOptions,
             title: "📍 24-Hour Stand Availability",
-            colors: [standColor],
+            colors: [standMarkerColor],
           };
 
           const bikeChart = new google.visualization.ColumnChart(
@@ -311,25 +284,28 @@ function drawStationChart(station) {
     });
 }
 
-function toggleMode() {
-  currentMode = currentMode === "bike" ? "stand" : "bike";
-  const button = document.getElementById("modeToggle");
-  button.textContent = currentMode === "bike" ? "Bike" : "Stand";
-  updateMarkers();
-}
-
-// Sets up the toggle behavior between "bike" and "stand" mode
+// ================= UI Controls: Mode & Legend =================
+// Set up toggle switch to switch between "bike" and "stand" modes
 function setupModeToggle() {
-  const modeSwitch = document.getElementById("modeSwitch");
+  const modeToggle = document.getElementById("modeToggle");
 
   // Listen for toggle change and update current mode accordingly
-  modeSwitch.addEventListener("change", function () {
+  modeToggle.addEventListener("change", function () {
     currentMode = this.checked ? "stand" : "bike";
     updateMarkers(); // Refresh the map markers based on selected mode
     updateLegend(); // Refresh the legends
   });
 }
 
+// Re-style all markers based on the current mode
+function updateMarkers() {
+  for (const marker of markers) {
+    setMarkerStyle(marker);
+  }
+}
+
+// ================= UI Controls: Date & Time =================
+// Enable or disable time inputs depending on "now" vs "future" selection
 function setupTimeToggle() {
   document.querySelectorAll('input[name="timeMode"]').forEach((radio) => {
     radio.addEventListener("change", () => {
@@ -339,6 +315,7 @@ function setupTimeToggle() {
       hourSelect.disabled = !isFuture;
 
       if (!isFuture) {
+        // reset form to current time
         setNowAsDefaultTime();
       } else {
         updateHourOptions(daySelect.value);
@@ -347,6 +324,7 @@ function setupTimeToggle() {
   });
 }
 
+// Populate the day dropdown with the next 7 days
 function setupDaySelector() {
   const now = new Date();
   for (let i = 0; i < 7; i++) {
@@ -368,6 +346,7 @@ function setupDaySelector() {
   });
 }
 
+// Populate the hour dropdown based on selected day and current time
 function updateHourOptions(selectedDateStr) {
   const now = new Date();
   const isToday = selectedDateStr === now.toISOString().split("T")[0];
@@ -388,6 +367,7 @@ function updateHourOptions(selectedDateStr) {
   }
 }
 
+// Set the time selector to the current time and disable input
 function setNowAsDefaultTime() {
   const now = new Date();
   const todayStr = now.toISOString().split("T")[0];
@@ -402,17 +382,215 @@ function setNowAsDefaultTime() {
   hourSelect.disabled = true;
 }
 
-// Setup when DOM is ready
-document.addEventListener("DOMContentLoaded", () => {
-  setupModeToggle();
-  // Use Dublin center as default weather 
-  showWeatherInfo('Dublin City Center', 53.3409, -6.2625);
-  setupDaySelector();
-  setupTimeToggle();
-  setNowAsDefaultTime();
-  updateLegend();
-});
 
+// ================= Journey Planning =================
+// Set up Google Places Autocomplete for input fields
+function initAutocomplete(field) {
+  const input = document.getElementById(field);
+  const autocomplete = new google.maps.places.Autocomplete(input);
+
+  autocomplete.addListener("place_changed", function () {
+    const place = autocomplete.getPlace();
+    if (!place.geometry) {
+      alert("No details available for the selected location.");
+      return;
+    }
+
+    const lat = place.geometry.location.lat();
+    const lon = place.geometry.location.lng();
+    console.log(`Selected ${field}:`, place.formatted_address, lat, lon);
+
+    // Store lat/lng for journey planning
+    if (field === "start-location") {
+      startLocation = { lat, lon, address: place.formatted_address };
+    } else if (field === "destination") {
+      destinationLocation = { lat, lon, address: place.formatted_address };
+    }
+  });
+}
+
+// Send API request to plan a journey (with or without timestamp)
+function planJourney() {
+  const day = daySelect.value;
+  const hour = hourSelect.value;
+  const isNow = document.getElementById("mode-now").checked;
+
+  if (!startLocation || !destinationLocation) {
+    alert("Please select valid start and destination locations.");
+    return;
+  }
+
+  // center the map on start Location and mark start and destination locations on the map
+  map.setCenter({ lat: startLocation.lat, lng: startLocation.lon });
+  addJourneyLocationMarker("start", startLocation.lat, startLocation.lon);
+  addJourneyLocationMarker(
+    "destination",
+    destinationLocation.lat,
+    destinationLocation.lon
+  );
+
+
+  // build journey API URL
+  let url = `${BASE_URL}/api/plan-journey?start_lat=${startLocation.lat}&start_lon=${startLocation.lon}&dest_lat=${destinationLocation.lat}&dest_lon=${destinationLocation.lon}`;
+  // If mode is ‘right now’, omit timestamp from API
+  if (!isNow) {
+    const unixTimestamp = toUnixTimestamp(day, hour);
+    url += `&timestamp=${unixTimestamp}`;
+  }
+  console.log(`API Call: ${url}`);
+
+  fetch(url)
+    .then((response) => response.json())
+    .then((data) => {
+      console.log("Journey Plan Response:", data);
+      showJourneyResultPanel(
+        day,
+        hour,
+        startLocation,
+        destinationLocation,
+        data
+      );
+    })
+    .catch((error) => {
+      console.error("Error sending journey data:", error);
+    });
+}
+
+
+// Highlight the markers for start and destination stations
+function highlightJourneyStations(startId, destId) {
+  for (const marker of markers) {
+    const stationId = marker.station_data.id;
+
+    if (stationId === startId) {
+      setMarkerStyle(marker, "selected");
+    } else if (stationId === destId) {
+      setMarkerStyle(marker, "selected");
+    }
+  }
+}
+
+// Add a marker to the map for start or destination location
+function addJourneyLocationMarker(type, lat, lng) {
+  const iconUrl = `./static/assets/${type}_location.png`;
+
+  const marker = new google.maps.Marker({
+    position: { lat, lng },
+    map: map,
+    icon: {
+      url: iconUrl,
+      scaledSize: new google.maps.Size(40, 40),
+    },
+  });
+  journeyMarkers.push(marker);
+}
+
+// Display journey plan result in the result panel
+function showJourneyResultPanel(
+  day,
+  hour,
+  startLocation,
+  destinationLocation,
+  data
+) {
+  const isFuture = document.getElementById("mode-future").checked;
+  let resultHtml;
+  document.getElementById("journey-form-panel").style.display = "none";
+  document.getElementById("journey-result-panel").style.display = "block";
+  if (data.error) {
+    resultHtml = `
+      <p>🚫 No recommended bike stations found. Please try again.</p>
+    `;
+  } else {
+    resultHtml = `
+    ${
+      isFuture
+        ? `
+      <div class="prediction-warning">
+        Start and destination station availability is estimated from historical trends. Actual conditions may vary.
+      </div>
+    `
+        : ""
+    }
+    <h3>🚲 Journey Plan Summary</h3>
+      <p><strong>From:</strong><br> ${startLocation.address}</p>
+      <p><strong>To:</strong><br> ${destinationLocation.address}</p>
+      <p><strong>Day & Time:</strong><br> ${day}, ${hour}</p>
+
+    <h4>📍 Start Station</h4>
+      <p><strong>Name:</strong> ${data.start_station.name}</p>
+      <p><strong>Available Bikes:</strong> ${
+        data.start_station.details.available_bikes
+      }</p>
+      <p><strong>Last Updated:</strong> ${
+        data.start_station.details.last_update
+      }</p>
+
+    <h4>🏁 Destination Station</h4>
+      <p><strong>Name:</strong> ${data.destination_station.name}</p>
+      <p><strong>Available Stands:</strong> ${
+        data.destination_station.details.available_bike_stands
+      }</p>
+      <p><strong>Last Updated:</strong> ${
+        data.destination_station.details.last_update
+      }</p>
+
+      <div class="legend"></div>
+  `;
+  }
+  showJourneyMarkers = true;
+  document.getElementById("results-content").innerHTML = resultHtml;
+  highlightJourneyStations(data.start_station.id, data.destination_station.id);
+  updateLegend();
+}
+
+// Clear all journey markers from the map
+function clearJourneyLocationMarkers() {
+  for (const marker of journeyMarkers) {
+    marker.setMap(null); // Remove from map
+  }
+  journeyMarkers = []; // Clear the array
+  showJourneyMarkers = false; // Optional: hide legend icons
+}
+
+// Return to the input form view and reset journey display
+function goBackToForm() {
+  document.getElementById("journey-form-panel").style.display = "block";
+  document.getElementById("journey-result-panel").style.display = "none";
+  clearJourneyLocationMarkers();
+  updateMarkers();
+  updateLegend();
+}
+
+// ================= Utilities =================
+// Fetch and display live weather info in the top bar
+function showWeatherInfo(location_name, lat, lon) {
+  const weatherInfo = document.getElementById("weather-info");
+  fetch(`${BASE_URL}/api/weather/current?lat=${lat}&lon=${lon}`)
+    .then((response) => response.json())
+    .then((data) => {
+      if (!data) {
+        throw new Error(
+          "Invalid data format: Expected an object with a 'data' array"
+        );
+      }
+
+      var iconUrl = `http://openweathermap.org/img/w/${data.weather[0].icon}.png`;
+      var temp = data.temp;
+      var weatherDescription = data.weather[0].description;
+
+      // Set the weather info inline in the top bar
+      weatherInfo.innerHTML = `${location_name}:<img src="${iconUrl}" alt="Weather Icon" style="width: 25px; vertical-align: middle; margin-left: 10px;"> 
+         <span style="font-weight: bold; color: #aee0ed; margin-left: 5px;">${temp}°C (${weatherDescription})</span>`;
+    })
+    .catch((error) => {
+      console.error("Error fetching weather data:", error);
+      weatherInfo.innerHTML =
+        "<span style='color: red;'>Failed to load weather</span>";
+    });
+}
+
+// Set the icon and animation for a marker based on availability
 function setMarkerStyle(marker, mode = "default") {
   const station = marker.station_data;
   let availability;
@@ -451,197 +629,16 @@ function setMarkerStyle(marker, mode = "default") {
   }
 }
 
-function updateMarkers() {
-  for (const marker of markers) {
-    setMarkerStyle(marker);
-  }
-}
-
-function planJourney() {
-  // todo: change the API call if the journey is leave now
-  const day = document.getElementById("day-select").value;
-  const hour = document.getElementById("hour-select").value;
-
-  if (!startLocation || !destinationLocation) {
-    alert("Please select valid start and destination locations.");
-    return;
-  }
-
-  map.setCenter({ lat: startLocation.lat, lng: startLocation.lon });
-  addJourneyLocationMarker("start", startLocation.lat, startLocation.lon);
-  // mark destination location on the map
-  addJourneyLocationMarker(
-    "destination",
-    destinationLocation.lat,
-    destinationLocation.lon
-  );
-
-  const unixTimestamp = toUnixTimestamp(day, hour);
-  console.log(`API Call link: ${BASE_URL}/api/plan-journey?start_lat=${startLocation.lat}&start_lon=${startLocation.lon}&dest_lat=${destinationLocation.lat}&dest_lon=${destinationLocation.lon}&timestamp=${unixTimestamp}`)
-
-  fetch(
-    `${BASE_URL}/api/plan-journey?start_lat=${startLocation.lat}&start_lon=${startLocation.lon}&dest_lat=${destinationLocation.lat}&dest_lon=${destinationLocation.lon}&timestamp=${unixTimestamp}`
-  )
-    .then((response) => response.json())
-    .then((data) => {
-      console.log("Journey Plan Response:", data);
-      showJourneyResultPanel(
-        day,
-        hour,
-        startLocation,
-        destinationLocation,
-        data
-      );
-    })
-    .catch((error) => {
-      console.error("Error sending journey data:", error);
-    });
-}
-
+// Convert date and hour to a Unix timestamp (in seconds)
 function toUnixTimestamp(day, hour) {
   const dateTimeString = `${day}T${hour}:00`; // add seconds for full ISO string
-  const date = new Date(dateTimeString);      // parse as local time
-  return Math.floor(date.getTime() / 1000);   // convert ms to seconds
+  const date = new Date(dateTimeString); // parse as local time
+  return Math.floor(date.getTime() / 1000); // convert ms to seconds
 }
 
-function highlightJourneyStations(startId, destId) {
-  for (const marker of markers) {
-    const stationId = marker.station_data.id;
-
-    if (stationId === startId) {
-      setMarkerStyle(marker, "selected");
-    } else if (stationId === destId) {
-      setMarkerStyle(marker, "selected");
-    }
-  }
-}
-
-function goBackToForm() {
-  document.getElementById("journey-form-panel").style.display = "block";
-  document.getElementById("journey-result-panel").style.display = "none";
-  clearJourneyLocationMarkers();
-  updateMarkers();
-  updateLegend();
-}
-
-function showJourneyResultPanel(
-  day,
-  hour,
-  startLocation,
-  destinationLocation,
-  data
-) {
-  let resultHtml;
-  document.getElementById("journey-form-panel").style.display = "none";
-  document.getElementById("journey-result-panel").style.display = "block";
-  if (data.error) {
-    resultHtml = `
-      <p>🚫 No recommended bike stations found. Please try again.</p>
-    `;
-  } else {
-    resultHtml = `
-    <h3>🚲 Journey Plan Summary</h3>
-    <p><strong>From:</strong><br> ${startLocation.address}</p>
-    <p><strong>To:</strong><br> ${destinationLocation.address}</p>
-    <p><strong>Day & Time:</strong><br> ${day}, ${hour}</p>
-
-    <h4>📍 Start Station</h4>
-    <p><strong>Name:</strong> ${data.start_station.name}</p>
-    <p><strong>Available Bikes:</strong> ${data.start_station.details.available_bikes}</p>
-    <p><strong>Last Updated:</strong> ${data.start_station.details.last_update}</p>
-
-    <h4>🏁 Destination Station</h4>
-    <p><strong>Name:</strong> ${data.destination_station.name}</p>
-    <p><strong>Available Stands:</strong> ${data.destination_station.details.available_bike_stands}</p>
-    <p><strong>Last Updated:</strong> ${data.destination_station.details.last_update}</p>
-
-    <div class="legend"></div>
-  `;
-  }
-  showJourneyMarkers = true;
-  document.getElementById("results-content").innerHTML = resultHtml;
-  highlightJourneyStations(data.start_station.id, data.destination_station.id);
-  updateLegend();
-}
-
-let startLocation = null;
-let destinationLocation = null;
-
-function addJourneyLocationMarker(type, lat, lng) {
-  const iconUrl = `./static/assets/${type}_location.png`;
-
-  const marker = new google.maps.Marker({
-    position: { lat, lng },
-    map: map,
-    icon: {
-      url: iconUrl,
-      scaledSize: new google.maps.Size(40, 40),
-    },
-  });
-  journeyMarkers.push(marker);
-}
-
-function clearJourneyLocationMarkers() {
-  for (const marker of journeyMarkers) {
-    marker.setMap(null); // Remove from map
-  }
-  journeyMarkers = []; // Clear the array
-  showJourneyMarkers = false; // Optional: hide legend icons
-}
-
-function initAutocomplete(field) {
-  const input = document.getElementById(field);
-  const autocomplete = new google.maps.places.Autocomplete(input);
-
-  autocomplete.addListener("place_changed", function () {
-    const place = autocomplete.getPlace();
-    if (!place.geometry) {
-      alert("No details available for the selected location.");
-      return;
-    }
-
-    const lat = place.geometry.location.lat();
-    const lon = place.geometry.location.lng();
-    console.log(`Selected ${field}:`, place.formatted_address, lat, lon);
-
-    // Store lat/lng for journey planning
-    if (field === "start-location") {
-      startLocation = { lat, lon, address: place.formatted_address };
-    } else if (field === "destination") {
-      destinationLocation = { lat, lon, address: place.formatted_address };
-    }
-  });
-}
-
-function showWeatherInfo(location_name, lat, lon) {
-  const weatherInfo = document.getElementById("weather-info");
-  fetch(`${BASE_URL}/api/weather/current?lat=${lat}&lon=${lon}`)
-    .then((response) => response.json())
-    .then((data) => {
-      if (!data) {
-        throw new Error(
-          "Invalid data format: Expected an object with a 'data' array"
-        );
-      }
-
-      var iconUrl = `http://openweathermap.org/img/w/${data.weather[0].icon}.png`;
-      var temp = data.temp;
-      var weatherDescription = data.weather[0].description;
-
-      // Set the weather info inline in the top bar
-      weatherInfo.innerHTML = 
-        `${location_name}:<img src="${iconUrl}" alt="Weather Icon" style="width: 25px; vertical-align: middle; margin-left: 10px;"> 
-         <span style="font-weight: bold; color: #aee0ed; margin-left: 5px;">${temp}°C (${weatherDescription})</span>`;
-
-    })
-    .catch((error) => {
-      console.error("Error fetching weather data:", error);
-      weatherInfo.innerHTML = "<span style='color: red;'>Failed to load weather</span>";
-    });
-}
-
+// Update the legend panel based on current UI state
 function updateLegend() {
-  const legends = document.getElementsByClassName("legend");
+  const legends = document.getElementsByClassName("legend"); // 回傳的是多個元素
 
   const content = `
     <h4>Legend</h4>
@@ -672,30 +669,22 @@ function updateLegend() {
   }
 }
 
+// ================= App Entry & Bootstrapping =================
+// Run initMap() after Google Maps script is loaded
 window.onload = function () {
   if (typeof google !== "undefined") {
     initMap();
   }
 };
 
-// Function to display the modal
-function showModal(content) {
-  const modal = document.getElementById("myModal");
-  const modalText = document.getElementById("modalText");
-  // Set the content with HTML (HTML is parsed here)
-  modalText.innerHTML = content;
-  // Display the modal
-  modal.style.display = "block";
-  // Close the modal when the user clicks on the <span> element
-  const closeBtn = document.getElementsByClassName("close")[0];
-  closeBtn.onclick = function () {
-    modal.style.display = "none";
-  };
-
-  // Close the modal if the user clicks anywhere outside of the modal
-  window.onclick = function (event) {
-    if (event.target == modal) {
-      modal.style.display = "none";
-    }
-  };
-}
+// Set up app components after DOM content is loaded
+document.addEventListener("DOMContentLoaded", () => {
+  loadGoogleMapsAPI();
+  setupModeToggle();
+  // Use Dublin center as default weather
+  showWeatherInfo("Dublin City Center", 53.3498, -6.2603);
+  setupDaySelector();
+  setupTimeToggle();
+  setNowAsDefaultTime();
+  updateLegend();
+});
