@@ -258,6 +258,23 @@ button:hover .stars {
   box-shadow: 0 0 10px rgba(110, 193, 255, 0.1);
 }
 
+@keyframes moveAndFade {
+  0% {
+    left: -100%; /* Start off-screen */
+    opacity: 1; /* Fully visible */
+  }
+  50% {
+    left: 50%; /* Center horizontally on screen */
+    transform: translateX(-50%) translateY(-50%); /* Horizontally and vertically center */
+    opacity: 1; /* Keep it visible */
+  }
+  100% {
+    left: 100%; /* Move to the right side of the screen */
+    opacity: 0; /* Fade out */
+    transform: translateY(-50%) translateX(50%); /* Keep vertically centered but move off-screen */
+  }
+}
+
 /* === Radio Option (Date & Time Mode) === */
 .radio-option {
   display: flex;
@@ -382,3 +399,4 @@ footer {
     font-size: 14px;
   }
 }
+
