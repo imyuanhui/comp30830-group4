@@ -16,7 +16,7 @@ const standMarkerColor = "#F7CE68"; // Marker color for stand availability
 const daySelect = document.getElementById("day-select"); // <select> dropdown for travel day
 const hourSelect = document.getElementById("hour-select"); // <select> dropdown for travel hour
 
-const BASE_URL = "http://127.0.0.1:8000"; // Backend API base URL
+const BASE_URL = "http://34.242.107.125:8000"; // Backend API base URL
 
 // ================= Initialization =================
 // Load the Google Maps API dynamically and initialize the map
@@ -382,7 +382,6 @@ function setNowAsDefaultTime() {
   hourSelect.disabled = true;
 }
 
-
 // ================= Journey Planning =================
 // Set up Google Places Autocomplete for input fields
 function initAutocomplete(field) {
@@ -429,7 +428,6 @@ function planJourney() {
     destinationLocation.lon
   );
 
-
   // build journey API URL
   let url = `${BASE_URL}/api/plan-journey?start_lat=${startLocation.lat}&start_lon=${startLocation.lon}&dest_lat=${destinationLocation.lat}&dest_lon=${destinationLocation.lon}`;
   // If mode is ‘right now’, omit timestamp from API
@@ -455,7 +453,6 @@ function planJourney() {
       console.error("Error sending journey data:", error);
     });
 }
-
 
 // Highlight the markers for start and destination stations
 function highlightJourneyStations(startId, destId) {
