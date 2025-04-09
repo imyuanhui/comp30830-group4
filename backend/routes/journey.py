@@ -92,14 +92,16 @@ def plan_journey():
     if "timestamp" in params:
         try:
             # Get Temperature
-            temp = get_weather_by_coordinate_time(53.3476,-6.2637,params["timestamp"])["data"]["temp"]
-            if temp is None:
-                temp = 14
+            data = get_weather_by_coordinate_time(53.3476,-6.2637,params["timestamp"])["data"]
+            temp = data["temp"]
 
             for s in start_nearby[:]:  # Copy the list to avoid modifying it while iterating
-                s["predicted_bike_availability"] = int(predict_availability(s["id"], params["timestamp"], temp))
-                if s["predicted_bike_availability"] <= 0:
+                prediction = {}
+                prediction["predicted_bike_availability"] = int(predict_availability(s["id"], params["timestamp"], temp))
+                if prediction["predicted_bike_availability"] <= 0:
                     start_nearby.remove(s)
+                    continue
+                s["prediction"] = prediction
 
             # Select the best start station based on proximity
             start_station = min(
@@ -107,11 +109,17 @@ def plan_journey():
                 key=lambda s: haversine(start_lat, start_lon, s["lat"], s["lon"]),
                 default=None
             )
+            start_station_weather = get_weather_by_coordinate_time(start_station["lat"], start_station["lon"], params["timestamp"])["data"]
+            start_station["prediction"]["temp"] = start_station_weather["temp"]
+            start_station["prediction"]["icon"] = start_station_weather["icon"]
 
             for s in dest_nearby[:]:
-                s["predicted_stand_availability"] = int(predict_availability(s["id"], params["timestamp"], temp, "stand"))
-                if s["predicted_stand_availability"] <= 0:
+                prediction = {}
+                prediction["predicted_stand_availability"] = int(predict_availability(s["id"], params["timestamp"], temp, "stand"))
+                if prediction["predicted_stand_availability"] <= 0:
                     dest_nearby.remove(s)
+                    continue
+                s["prediction"] = prediction
 
             # Select the best destination station based on proximity
             dest_station = min(
@@ -119,6 +127,10 @@ def plan_journey():
                 key=lambda s: haversine(dest_lat, dest_lon, s["lat"], s["lon"]),
                 default=None
             )
+            dest_station_weather = get_weather_by_coordinate_time(dest_station["lat"], dest_station["lon"], params["timestamp"])["data"]
+            dest_station["prediction"]["temp"] = dest_station_weather["temp"]
+            dest_station["prediction"]["icon"] = dest_station_weather["icon"]
+
         except Exception as e:
             return jsonify({"error": f"Error while predicting availability: {str(e)}"}), 500
     else:
