@@ -41,3 +41,23 @@ def get_weather_by_coordinate(lat=53.3476, lon=-6.2637):
     else:
         # If the request fails, return only the status code
         return {"status": res.status_code}
+
+def get_weather_by_coordinate_time(lat=53.3476,lon=-6.2637,timestamp=1744108800):
+    # Check if the API key is available, raise an error if missing
+    if not API_KEY:
+        raise ValueError("Missing Openweather API key.")
+    
+    # Make a request to the OpenWeather API for current weather data
+    res = requests.get(f'https://api.openweathermap.org/data/3.0/onecall/timemachine?lat={lat}&lon={lon}&dt={timestamp}&appid={API_KEY}&units=metric')
+
+    # If the request is successful (status code 200), return the current weather data
+    if res.status_code == 200:
+        data = res.json()["data"][0]
+        return {
+            "status": res.status_code,
+            "data": data
+        }
+    else:
+        # If the request fails, return only the status code
+        return {"status": res.status_code}
+    
