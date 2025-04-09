@@ -248,7 +248,7 @@ button:hover .stars {
 }
 
 .prediction-warning {
-  background: rgba(133, 197, 255, 0.15); /* 淡藍、透明背景 */
+  background: rgba(133, 197, 255, 0.15);
   border-left: 4px solid #6ec1ff;
   color: #b5dbff;
   padding: 12px 16px;
@@ -310,6 +310,48 @@ button:hover .stars {
   margin-right: 10px;
 }
 
+.section-title {
+  margin-bottom: 12px;
+}
+
+.info-card {
+  background-color: #142b3e;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  box-shadow: 0 0 3px rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 14px;
+}
+
+.station-info-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  background-color: #1e2e40;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 0 3px rgba(255, 255, 255, 0.1);
+}
+
+.station-text p {
+  margin: 4px 0;
+  font-size: 14px;
+  color: white;
+}
+
+.station-icon {
+  margin-left: 10px;
+}
+
+.weather-icon {
+  width: 40px;
+  height: 40px;
+  margin-top: 4px;
+}
+
+
 /* === Map Display Area === */
 #map-container {
   flex-grow: 1;
@@ -326,6 +368,27 @@ button:hover .stars {
   box-sizing: border-box;
 }
 
+.custom-map-control-button {
+  background-color: #fff;
+  border: none;
+  outline: none;
+  width: 130px;
+  height: 35px;
+  margin: 10px;
+  padding: 0 10px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 14px;
+  color: #333;
+}
+
+.custom-map-control-button:hover {
+  background-color: #f0f0f0;
+}
+
+
 /* === Footer === */
 footer {
   background-color: var(--background-color);
@@ -336,34 +399,11 @@ footer {
   box-sizing: border-box;
 }
 
-/* === Animated Bike GIF (Bottom Right) === */
-#bike-gif-container {
-  position: fixed;
-  right: 40px;
-  bottom: 20px;
-  z-index: 1000;
-  pointer-events: none;
-}
-
-#bike-gif-container img {
-  width: 12vw;
-  max-width: 120px;
-  min-width: 60px;
-  height: auto;
-  border-radius: 30%;
-  object-fit: cover;
-  opacity: 0.95;
-}
-
 /* === Responsive: Tablet View (≤768px) === */
 @media (max-width: 768px) {
   #main-container {
     flex-direction: column;
     height: auto;
-  }
-
-  #bike-gif-container {
-    display: none;
   }
 
   #map-container {
