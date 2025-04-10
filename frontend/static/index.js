@@ -84,7 +84,7 @@ function getMyLocation(map) {
         lng: longitude,
       };
 
-      showWeatherInfo("Your Location: ", latitude, longitude);
+      showWeatherInfo("Your Location", latitude, longitude);
       map.setCenter(userLocation);
       map.setZoom(14);
       showUserLocation = true;
