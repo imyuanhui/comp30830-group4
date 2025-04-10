@@ -16,7 +16,6 @@ const standMarkerColor = "#F7CE68"; // Marker color for stand availability
 const daySelect = document.getElementById("day-select"); // <select> dropdown for travel day
 const hourSelect = document.getElementById("hour-select"); // <select> dropdown for travel hour
 
-// const BASE_URL = "http://127.0.0.1:8000"; // Backend API base URL
 // ================= Initialization =================
 // Load the Google Maps API dynamically and initialize the map
 function loadGoogleMapsAPI() {
