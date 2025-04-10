@@ -16,8 +16,7 @@ const standMarkerColor = "#F7CE68"; // Marker color for stand availability
 const daySelect = document.getElementById("day-select"); // <select> dropdown for travel day
 const hourSelect = document.getElementById("hour-select"); // <select> dropdown for travel hour
 
-const BASE_URL = "http://127.0.0.1:8000"; // Backend API base URL
-
+// const BASE_URL = "http://127.0.0.1:8000"; // Backend API base URL
 // ================= Initialization =================
 // Load the Google Maps API dynamically and initialize the map
 function loadGoogleMapsAPI() {
@@ -52,7 +51,6 @@ function initMap() {
   initAutocomplete("start-location");
   initAutocomplete("destination");
   addMyLocationButton(map);
-
 }
 
 function addMyLocationButton(map) {
@@ -69,7 +67,6 @@ function addMyLocationButton(map) {
   controlDiv.appendChild(button);
   map.controls[google.maps.ControlPosition.TOP_CENTER].push(controlDiv);
 }
-
 
 // Get the user's current location and center the map on it
 function getMyLocation(map) {
@@ -505,7 +502,6 @@ function showJourneyResultPanel(
   destinationLocation,
   data
 ) {
-  
   let resultHtml;
 
   document.getElementById("journey-form-panel").style.display = "none";
@@ -516,11 +512,11 @@ function showJourneyResultPanel(
     `;
     document.getElementById("results-content").innerHTML = resultHtml;
     return;
-  } 
+  }
 
   const isFuture = document.getElementById("mode-future").checked;
-  let predictionWarning='';
-  let predictionLabel='';
+  let predictionWarning = "";
+  let predictionLabel = "";
   let startStationBikes = data.start_station.details.available_bikes;
   let destStationStands = data.start_station.details.available_bike_stands;
   let startStationIconUrl = `http://openweathermap.org/img/w/${data.start_station.prediction.icon}.png`;
@@ -533,13 +529,13 @@ function showJourneyResultPanel(
       </div>
     `;
     predictionLabel = "Predicted ";
-    startStationBikes = data.start_station.prediction.predicted_bike_availability;
-    destStationStands = data.destination_station.prediction.predicted_stand_availability;
+    startStationBikes =
+      data.start_station.prediction.predicted_bike_availability;
+    destStationStands =
+      data.destination_station.prediction.predicted_stand_availability;
+  }
 
-  } 
-    
-
-    resultHtml = `
+  resultHtml = `
     ${predictionWarning}
     <h4 class="section-title">🚲 Journey Plan Summary</h4>
     <div class="info-card">
@@ -574,13 +570,12 @@ function showJourneyResultPanel(
     
     <div class="legend"></div>
   `;
-  
+
   showJourneyMarkers = true;
   document.getElementById("results-content").innerHTML = resultHtml;
   highlightJourneyStations(data.start_station.id, data.destination_station.id);
   updateLegend();
 }
-
 
 // Clear all journey markers from the map
 function clearJourneyLocationMarkers() {

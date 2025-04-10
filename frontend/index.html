@@ -1,106 +1,138 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dublin Bikes</title>
+    <link rel="stylesheet" href="./static/styles.css" />
+    <script>
+      const BASE_URL = "{{ base_url }}";
+    </script>
+    <script src="./static/index.js" defer></script>
+    <script
+      type="text/javascript"
+      src="https://www.gstatic.com/charts/loader.js"
+    ></script>
+  </head>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dublin Bikes</title>
-  <link rel="stylesheet" href="./static/styles.css" />
-  <script src="./static/index.js" defer></script>
-  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-</head>
-
-<body>
-  <!-- Top bar -->
-  <div id="top-bar">
-    <!-- Logo and title -->
-    <div id="top-bar-left">
-      <h1>
-        Dublin Bikes
-        <img src="./static/assets/bike_gif.gif" alt="Dublin Bikes Logo" class="db-image" />
-      </h1>
-    </div>
-
-    <!-- Weather display -->
-    <div id="top-bar-center">
-      <span id="weather-info"></span>
-    </div>
-
-    <!-- Toggle switch -->
-    <div id="top-bar-right">
-      <div id="bike-slot-toggle">
-        <input type="checkbox" class="checkbox" id="modeToggle" />
-        <div class="knobs"></div>
-        <div class="layer"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Main layout: sidebar and map -->
-  <div id="main-container">
-    <div id="sidebar">
-      <!-- Journey input -->
-      <div id="journey-form-panel">
-        <label>Please enter your starting location:</label>
-        <input type="text" id="start-location" placeholder="Enter a starting location..." autocomplete="off" />
-
-        <label>Please enter your destination:</label>
-        <input type="text" id="destination" placeholder="Enter your destination..." autocomplete="off" />
-
-        <label>When do you want to travel?</label>
-        <div class="radio-option">
-          <input type="radio" id="mode-now" name="timeMode" value="now" checked />
-          <label for="mode-now">Right now</label>
-        </div>
-        <div class="radio-option">
-          <input type="radio" id="mode-future" name="timeMode" value="future" />
-          <label for="mode-future">Plan ahead *</label>
-        </div>
-
-        <!-- Travel day & time (enabled only when planning ahead) -->
-        <label id="day-label" for="day-select" class="disabled-label">Travel day:</label>
-        <select id="day-select" disabled>
-          <option value="" selected disabled>Choose your day</option>
-        </select>
-
-        <label id="hour-label" for="hour-select" class="disabled-label">Travel time:</label>
-        <select id="hour-select" disabled>
-          <option value="" selected disabled>Choose your time</option>
-        </select>
-
-        <!-- Prediction note -->
-        <p id="prediction-note" class="note">
-          * Showing predicted data
-        </p>
-
-        <!-- Journey planning button -->
-        <button onclick="planJourney()">Plan Your Journey <span class="stars"></span> </button>
-        <!-- Legend for station icons -->
-        <div class="legend"></div>
+  <body>
+    <!-- Top bar -->
+    <div id="top-bar">
+      <!-- Logo and title -->
+      <div id="top-bar-left">
+        <h1>
+          Dublin Bikes
+          <img
+            src="./static/assets/bike_gif.gif"
+            alt="Dublin Bikes Logo"
+            class="db-image"
+          />
+        </h1>
       </div>
 
-      <!-- Journey result -->
-      <div id="journey-result-panel" style="display: none">
-        <div id="results-content">
-          <!-- Journey results will be injected here -->
+      <!-- Weather display -->
+      <div id="top-bar-center">
+        <span id="weather-info"></span>
+      </div>
+
+      <!-- Toggle switch -->
+      <div id="top-bar-right">
+        <div id="bike-slot-toggle">
+          <input type="checkbox" class="checkbox" id="modeToggle" />
+          <div class="knobs"></div>
+          <div class="layer"></div>
         </div>
-        <button onclick="goBackToForm()">← Back</button>
       </div>
     </div>
 
-    <!-- Map container -->
-    <div id="map-container">
-      <div id="map"></div>
+    <!-- Main layout: sidebar and map -->
+    <div id="main-container">
+      <div id="sidebar">
+        <!-- Journey input -->
+        <div id="journey-form-panel">
+          <label>Please enter your starting location:</label>
+          <input
+            type="text"
+            id="start-location"
+            placeholder="Enter a starting location..."
+            autocomplete="off"
+          />
+
+          <label>Please enter your destination:</label>
+          <input
+            type="text"
+            id="destination"
+            placeholder="Enter your destination..."
+            autocomplete="off"
+          />
+
+          <label>When do you want to travel?</label>
+          <div class="radio-option">
+            <input
+              type="radio"
+              id="mode-now"
+              name="timeMode"
+              value="now"
+              checked
+            />
+            <label for="mode-now">Right now</label>
+          </div>
+          <div class="radio-option">
+            <input
+              type="radio"
+              id="mode-future"
+              name="timeMode"
+              value="future"
+            />
+            <label for="mode-future">Plan ahead *</label>
+          </div>
+
+          <!-- Travel day & time (enabled only when planning ahead) -->
+          <label id="day-label" for="day-select" class="disabled-label"
+            >Travel day:</label
+          >
+          <select id="day-select" disabled>
+            <option value="" selected disabled>Choose your day</option>
+          </select>
+
+          <label id="hour-label" for="hour-select" class="disabled-label"
+            >Travel time:</label
+          >
+          <select id="hour-select" disabled>
+            <option value="" selected disabled>Choose your time</option>
+          </select>
+
+          <!-- Prediction note -->
+          <p id="prediction-note" class="note">* Showing predicted data</p>
+
+          <!-- Journey planning button -->
+          <button onclick="planJourney()">
+            Plan Your Journey <span class="stars"></span>
+          </button>
+          <!-- Legend for station icons -->
+          <div class="legend"></div>
+        </div>
+
+        <!-- Journey result -->
+        <div id="journey-result-panel" style="display: none">
+          <div id="results-content">
+            <!-- Journey results will be injected here -->
+          </div>
+          <button onclick="goBackToForm()">← Back</button>
+        </div>
+      </div>
+
+      <!-- Map container -->
+      <div id="map-container">
+        <div id="map"></div>
+      </div>
     </div>
-  </div>
 
-  <!-- Footer -->
-  <footer>
-    <p>Pedal your way to a cleaner and greener city.</p>
-    <p>Created by Wan-Hua Hsieh, Prakhar Dayal, and Yuanhui Xu (Group 4)</p>
-    <p>UCD Dublin</p>
-  </footer>
-
-</body>
-
+    <!-- Footer -->
+    <footer>
+      <p>Pedal your way to a cleaner and greener city.</p>
+      <p>Created by Wan-Hua Hsieh, Prakhar Dayal, and Yuanhui Xu (Group 4)</p>
+      <p>UCD Dublin</p>
+    </footer>
+  </body>
 </html>
