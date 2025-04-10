@@ -67,6 +67,9 @@ GOOGLE_MAPS_API_KEY=
 BIKE_API_KEY=
 BIKE_NAME=dublin
 BIKE_STATIONS_URL=https://api.jcdecaux.com/vls/v1/stations
+
+# Base Url cofiguration
+BASE_URL=http://your-server-ip:8000
 ```
 
 ---
@@ -83,24 +86,12 @@ python main.py
 
 ---
 
-### 4. Run the Application
-
-#### 4.1 Start the Backend Server
+### 4. Run the Server
 
 Navigate to the `backend` folder and start the Flask server:
 
 ```bash
 python app.py
-```
-
-#### 4.2 Configure Frontend Base URL
-
-Go to `frontend/static/index.js` and update the `BASE_URL` to match your backend server address. Examples:
-
-```js
-const BASE_URL = "http://127.0.0.1:8000"; // Local development
-// or
-const BASE_URL = "http://your-server-ip:8000"; // Remote deployment
 ```
 
 ---
