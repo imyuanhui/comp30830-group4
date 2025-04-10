@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from services import get_all_stations, predict_availability
 from utils import haversine
-from services import get_weather_by_coordinate_time
+from services import get_weather_by_coordinate_time, get_weather_by_coordinate
 
 journey_bp = Blueprint("journey", __name__)
 
@@ -112,6 +112,7 @@ def plan_journey():
             start_station_weather = get_weather_by_coordinate_time(start_station["lat"], start_station["lon"], params["timestamp"])["data"]
             start_station["prediction"]["temp"] = start_station_weather["temp"]
             start_station["prediction"]["icon"] = start_station_weather["icon"]
+            start_station["prediction"]["description"] = start_station_weather["description"]
 
             for s in dest_nearby[:]:
                 prediction = {}
@@ -130,6 +131,7 @@ def plan_journey():
             dest_station_weather = get_weather_by_coordinate_time(dest_station["lat"], dest_station["lon"], params["timestamp"])["data"]
             dest_station["prediction"]["temp"] = dest_station_weather["temp"]
             dest_station["prediction"]["icon"] = dest_station_weather["icon"]
+            dest_station["prediction"]["description"] = dest_station_weather["description"]
 
         except Exception as e:
             return jsonify({"error": f"Error while predicting availability: {str(e)}"}), 500
@@ -147,6 +149,24 @@ def plan_journey():
             key=lambda s: haversine(dest_lat, dest_lon, s["lat"], s["lon"]),
             default=None
         )
+        
+        if start_station is not None and dest_station is not None:
+            # Get current weather for start and destination station
+            start_weather_response = get_weather_by_coordinate(start_station["lat"], start_station["lon"])
+            if start_weather_response["status"] == 200:
+                start_station["prediction"] = {
+                    "temp": start_weather_response["data"]["temp"],
+                    "icon": start_weather_response["data"]["weather"][0]["icon"],
+                    "description": start_weather_response["data"]["weather"][0]["description"]
+                }
+            dest_weather_response = get_weather_by_coordinate(dest_station["lat"], dest_station["lon"])
+            if dest_weather_response["status"] == 200:
+                dest_station["prediction"] = {
+                    "temp": dest_weather_response["data"]["temp"],
+                    "icon": dest_weather_response["data"]["weather"][0]["icon"],
+                    "description": dest_weather_response["data"]["weather"][0]["description"]
+                }
+
 
     # Return error if no suitable start station or destination station found
     if not start_station:
