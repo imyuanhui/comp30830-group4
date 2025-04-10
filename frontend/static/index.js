@@ -19,7 +19,7 @@ const hourSelect = document.getElementById("hour-select"); // <select> dropdown 
 // ================= Initialization =================
 // Load the Google Maps API dynamically and initialize the map
 function loadGoogleMapsAPI() {
-  fetch(`${BASE_URL}/api/config`)
+  fetch(`/api/config`)
     .then((response) => response.json())
     .then((config) => {
       const script = document.createElement("script");
@@ -84,7 +84,7 @@ function getMyLocation(map) {
         lng: longitude,
       };
 
-      // showWeatherInfo("Your Location: ", latitude, longitude);
+      showWeatherInfo("Your Location: ", latitude, longitude);
       map.setCenter(userLocation);
       map.setZoom(14);
       showUserLocation = true;
@@ -102,6 +102,8 @@ function getMyLocation(map) {
     },
     (error) => {
       alert("Geolocation failed. Please enable location services.");
+      // Use Dublin center as default weather
+      showWeatherInfo("Dublin City Center", 53.3498, -6.2603);
     }
   );
 }
@@ -109,7 +111,7 @@ function getMyLocation(map) {
 // ================= Station Markers =================
 // Fetch station list from backend and create markers on map
 function getStations() {
-  fetch(`${BASE_URL}/api/stations`)
+  fetch(`/api/stations`)
     .then((response) => response.json())
     .then((data) => {
       if (!data || !data.data || !Array.isArray(data.data)) {
@@ -225,7 +227,7 @@ function attachStationClickListener(
 
 // Draw historical availability charts (24hr) for bikes and stands
 function drawStationChart(station) {
-  fetch(`${BASE_URL}/api/stations/history/demo/${station.id}`)
+  fetch(`/api/stations/history/demo/${station.id}`)
     .then((response) => response.json())
     .then((station_past) => {
       console.log(station_past);
@@ -440,7 +442,7 @@ function planJourney() {
   );
 
   // build journey API URL
-  let url = `${BASE_URL}/api/plan-journey?start_lat=${startLocation.lat}&start_lon=${startLocation.lon}&dest_lat=${destinationLocation.lat}&dest_lon=${destinationLocation.lon}`;
+  let url = `/api/plan-journey?start_lat=${startLocation.lat}&start_lon=${startLocation.lon}&dest_lat=${destinationLocation.lat}&dest_lon=${destinationLocation.lon}`;
   // If mode is ‘right now’, omit timestamp from API
   if (!isNow) {
     const unixTimestamp = toUnixTimestamp(day, hour);
@@ -597,7 +599,7 @@ function goBackToForm() {
 // ================= Utilities =================
 // Fetch weather for a certain time and location
 function fetchWeatherData(lat, lon) {
-  return fetch(`${BASE_URL}/api/weather/current?lat=${lat}&lon=${lon}`)
+  return fetch(`/api/weather/current?lat=${lat}&lon=${lon}`)
     .then((response) => response.json())
     .then((data) => {
       if (!data || !data.weather || !data.weather[0]) {
@@ -710,8 +712,6 @@ function updateLegend() {
 document.addEventListener("DOMContentLoaded", () => {
   loadGoogleMapsAPI();
   setupModeToggle();
-  // Use Dublin center as default weather
-  // showWeatherInfo("Dublin City Center", 53.3498, -6.2603);
   setupDaySelector();
   setupTimeToggle();
   setNowAsDefaultTime();
