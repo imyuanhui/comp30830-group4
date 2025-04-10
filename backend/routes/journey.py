@@ -1,15 +1,9 @@
 from flask import Blueprint, jsonify, request
 from services import get_all_stations, predict_availability
-from utils import haversine
+from utils import haversine, filter_nearby_stations
 from services import get_weather_by_coordinate_time, get_weather_by_coordinate
 
 journey_bp = Blueprint("journey", __name__)
-
-def filter_nearby_stations(stations, lat, lon, max_distance):
-    """Filter stations within the specified max_distance from the given coordinates."""
-    return [
-        s for s in stations if haversine(lat, lon, s["lat"], s["lon"]) <= max_distance
-    ]
 
 @journey_bp.route("/plan-journey", methods=["GET"])
 def plan_journey():
@@ -69,7 +63,7 @@ def plan_journey():
         }
     """
     try:
-        # Extract query parameters
+        # Parse and validate input coordinates
         params = request.args
         start_lat = float(params.get("start_lat"))
         start_lon = float(params.get("start_lon"))
@@ -78,10 +72,9 @@ def plan_journey():
     except (TypeError, ValueError):
         return jsonify({"error": "Invalid latitude or longitude values."}), 400
 
-    # Define walkable distance (in km)
-    WALKING_DISTANCE = 0.5  # 0.5 km walkable distance
+    WALKING_DISTANCE = 0.5  # Maximum walking distance to a bike station
 
-    # Get all stations
+    # Fetch all stations
     stations = get_all_stations()['data']
 
     # Filter nearby stations based on walking distance
@@ -91,17 +84,20 @@ def plan_journey():
     # If `timestamp` is provided, use prediction model for future bike availability
     if "timestamp" in params:
         try:
-            # Get Temperature
-            data = get_weather_by_coordinate_time(53.3476,-6.2637,params["timestamp"])["data"]
-            temp = data["temp"]
+            timestamp = int(params["timestamp"])
 
-            for s in start_nearby[:]:  # Copy the list to avoid modifying it while iterating
-                prediction = {}
-                prediction["predicted_bike_availability"] = int(predict_availability(s["id"], params["timestamp"], temp))
-                if prediction["predicted_bike_availability"] <= 0:
-                    start_nearby.remove(s)
+            # Use a central location to get temperature forecast (fallback if specific weather lookup fails)
+            central_lat, central_lon = 53.3476, -6.2637
+            weather_data = get_weather_by_coordinate_time(central_lat, central_lon, timestamp)["data"]
+            temp = weather_data["temp"]
+
+            # Predict availability for start stations
+            for station in start_nearby[:]:  # Copy to avoid in-place modification while iterating
+                predicted_bikes = int(predict_availability(station["id"], timestamp, temp))
+                if predicted_bikes <= 0:
+                    start_nearby.remove(station)
                     continue
-                s["prediction"] = prediction
+                station["prediction"] = {"predicted_bike_availability": predicted_bikes}
 
             # Select the best start station based on proximity
             start_station = min(
@@ -109,73 +105,83 @@ def plan_journey():
                 key=lambda s: haversine(start_lat, start_lon, s["lat"], s["lon"]),
                 default=None
             )
-            start_station_weather = get_weather_by_coordinate_time(start_station["lat"], start_station["lon"], params["timestamp"])["data"]
-            start_station["prediction"]["temp"] = start_station_weather["temp"]
-            start_station["prediction"]["icon"] = start_station_weather["icon"]
-            start_station["prediction"]["description"] = start_station_weather["description"]
 
-            for s in dest_nearby[:]:
-                prediction = {}
-                prediction["predicted_stand_availability"] = int(predict_availability(s["id"], params["timestamp"], temp, "stand"))
-                if prediction["predicted_stand_availability"] <= 0:
-                    dest_nearby.remove(s)
+            if start_station:
+                start_weather = get_weather_by_coordinate_time(start_station["lat"], start_station["lon"], timestamp)["data"]
+                start_station["prediction"].update({
+                    "temp": start_weather["temp"],
+                    "icon": start_weather["icon"],
+                    "description": start_weather["description"]
+                })
+
+            # Predict availability for destination stations
+            for station in dest_nearby[:]:
+                predicted_stands = int(predict_availability(station["id"], timestamp, temp, target="stand"))
+                if predicted_stands <= 0:
+                    dest_nearby.remove(station)
                     continue
-                s["prediction"] = prediction
+                station["prediction"] = {"predicted_stand_availability": predicted_stands}
 
-            # Select the best destination station based on proximity
+            # Select best destination station based on distance
             dest_station = min(
-                (s for s in dest_nearby),
+                dest_nearby,
                 key=lambda s: haversine(dest_lat, dest_lon, s["lat"], s["lon"]),
                 default=None
             )
-            dest_station_weather = get_weather_by_coordinate_time(dest_station["lat"], dest_station["lon"], params["timestamp"])["data"]
-            dest_station["prediction"]["temp"] = dest_station_weather["temp"]
-            dest_station["prediction"]["icon"] = dest_station_weather["icon"]
-            dest_station["prediction"]["description"] = dest_station_weather["description"]
+
+            if dest_station:
+                dest_weather = get_weather_by_coordinate_time(dest_station["lat"], dest_station["lon"], timestamp)["data"]
+                dest_station["prediction"].update({
+                    "temp": dest_weather["temp"],
+                    "icon": dest_weather["icon"],
+                    "description": dest_weather["description"]
+                })
 
         except Exception as e:
             return jsonify({"error": f"Error while predicting availability: {str(e)}"}), 500
+    
     else:
-        # Select the best start station with at least 2 bikes
+        # Handle real-time availability (no timestamp provided)
         start_station = min(
-            (s for s in start_nearby if s["details"]["available_bikes"] >= 2),
+            (s for s in start_nearby if s["details"]["available_bikes"] > 0),
             key=lambda s: haversine(start_lat, start_lon, s["lat"], s["lon"]),
             default=None
         )
 
-        # Select the best destination station with at least 2 available slots
         dest_station = min(
-            (s for s in dest_nearby if s["details"]["available_bike_stands"] >= 2),
+            (s for s in dest_nearby if s["details"]["available_bike_stands"] > 0),
             key=lambda s: haversine(dest_lat, dest_lon, s["lat"], s["lon"]),
             default=None
         )
         
-        if start_station is not None and dest_station is not None:
-            # Get current weather for start and destination station
-            start_weather_response = get_weather_by_coordinate(start_station["lat"], start_station["lon"])
-            if start_weather_response["status"] == 200:
+        # Add weather info to start and destination station if available
+        if start_station:
+            weather = get_weather_by_coordinate(start_station["lat"], start_station["lon"])
+            if weather["status"] == 200:
                 start_station["prediction"] = {
-                    "temp": start_weather_response["data"]["temp"],
-                    "icon": start_weather_response["data"]["weather"][0]["icon"],
-                    "description": start_weather_response["data"]["weather"][0]["description"]
+                    "temp": weather["data"]["temp"],
+                    "icon": weather["data"]["weather"][0]["icon"],
+                    "description": weather["data"]["weather"][0]["description"]
                 }
-            dest_weather_response = get_weather_by_coordinate(dest_station["lat"], dest_station["lon"])
-            if dest_weather_response["status"] == 200:
+
+        if dest_station:
+            weather = get_weather_by_coordinate(dest_station["lat"], dest_station["lon"])
+            if weather["status"] == 200:
                 dest_station["prediction"] = {
-                    "temp": dest_weather_response["data"]["temp"],
-                    "icon": dest_weather_response["data"]["weather"][0]["icon"],
-                    "description": dest_weather_response["data"]["weather"][0]["description"]
+                    "temp": weather["data"]["temp"],
+                    "icon": weather["data"]["weather"][0]["icon"],
+                    "description": weather["data"]["weather"][0]["description"]
                 }
 
 
-    # Return error if no suitable start station or destination station found
+    # Handle cases where no suitable stations are found
     if not start_station:
         return jsonify({"error": "No bike stations with enough bikes near the start location."}), 400
     if not dest_station:
-        return jsonify({"error": "No bike stations with enough slots near the destination."}), 400
+        return jsonify({"error": "No bike stations with enough stands near the destination."}), 400
 
-    # Return the best start and destination station
+    # Return final recommended stations
     return jsonify({
         "start_station": start_station,
-        "destination_station": dest_station,
+        "destination_station": dest_station
     })
