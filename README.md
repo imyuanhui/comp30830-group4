@@ -4,33 +4,30 @@ This project provides a web-based interface to visualize real-time Dublin bike s
 
 ## Key Features
 
-- Bike Station Information: Provides real-time data for bike availability and stand availability across all stations in Dublin.
+- Bike Station Information: Displays real-time data on bike and stand availability for all bike stations across Dublin.
 
-- Station-Specific Insights: Displays weather conditions and historical data (bike availability and stand availability trends in the last 24-hour) for individual bike stations.
+- Station-Specific Insights: Shows current weather conditions and visualizes historical trends in bike and stand availability over the past 24 hours for each station.
 
-- Journey Planning: Helps users plan their rides by identifying suitable stations for starting and ending based on bike availability, stand availability, and proximity to the start and destination locations.
+- Real-time Journey Planning: Assists users in planning their trips by suggesting optimal start and end stations based on live bike/stand availability and proximity to the user's specified locations.
+
+- Future Journey Planning: Enables users to plan rides up to 5 days in advance using a predictive model. Provides forecasts of bike and stand availability along with expected weather conditions for recommended stations.
 
 ## Setup Guide
 
-### 0. Setup Conda Virtual Environment
+### 0. Create Conda Virtual Environment
 
-Before installing dependencies, create a Conda environment:
+First, create and activate a Conda environment for the project:
 
 ```bash
 conda create --name dublin_bikes python=3.11
-```
-
-Activate the environment:
-
-```bash
 conda activate dublin_bikes
 ```
 
 ---
 
-### 1. Install Requirements
+### 1. Install Dependencies
 
-Once the virtual environment is activated, install the required dependencies:
+Once the environment is activated, install all required Python packages:
 
 ```bash
 pip install -r requirements.txt
@@ -38,18 +35,22 @@ pip install -r requirements.txt
 
 ---
 
-### 2. Environment Variables Setup
+### 2. Configure Environment Variables
 
-#### 2.1 Rename `example.env`
+#### 2.1 Rename the Environment File
 
-Rename `example.env` to `.env`:
+Rename the example environment file:
 
-#### 2.2 Fill in Required Fields
+```bash
+mv example.env .env
+```
 
-Edit the `.env` file and provide the necessary API keys and database credentials:
+#### 2.2 Add API Keys and Credentials
+
+Edit the `.env` file and fill in the following fields:
 
 ```ini
-# OpenWeather API key for fetching weather data
+# OpenWeather API key
 WEATHER_API_KEY=your_openweather_api_key
 
 # MySQL database credentials
@@ -59,7 +60,7 @@ DB_PORT=
 DB_URI=
 DB_NAME=bike
 
-# Google Maps API key (if required for frontend map rendering)
+# Google Maps API key (optional, for map rendering in frontend)
 GOOGLE_MAPS_API_KEY=
 
 # Dublin Bikes API credentials
@@ -70,27 +71,21 @@ BIKE_STATIONS_URL=https://api.jcdecaux.com/vls/v1/stations
 
 ---
 
-### 3. Local Database Setup
+### 3. Initialize Local Database
 
-#### 3.1 Run Data Scraper
-
-Navigate to the `backend/local_db_setup` folder and execute `main.py` to fetch and store bike and weather data:
+Navigate to the `backend/local_db_setup` directory and run the following script to fetch and store initial bike and weather data:
 
 ```bash
 python main.py
 ```
 
-#### 3.2 Prevent Re-Setup
-
-After the initial setup, **comment out** the following line in `main.py` to avoid resetting the database on every run:
-
-```python
-# db_set_up = DBSetUp()  # Comment this line out after the first run
-```
+> **Note:** This step is only required during the initial setup.
 
 ---
 
-### 4. Run the Server
+### 4. Run the Application
+
+#### 4.1 Start the Backend Server
 
 Navigate to the `backend` folder and start the Flask server:
 
@@ -98,10 +93,22 @@ Navigate to the `backend` folder and start the Flask server:
 python app.py
 ```
 
+#### 4.2 Configure Frontend Base URL
+
+Go to `frontend/static/index.js` and update the `BASE_URL` to match your backend server address. Examples:
+
+```js
+const BASE_URL = "http://127.0.0.1:8000"; // Local development
+// or
+const BASE_URL = "http://your-server-ip:8000"; // Remote deployment
+```
+
 ---
 
-### 5. Run the Client
+### 5. Launch the Web Application
 
-Navigate to the `frontend` folder and open `index.html` in a browser:
+Open your browser and enter the correct server IP and port.
 
-Now, the web application should be running, displaying real-time Dublin bike station data and weather information. 🚲🌤️
+The web app should now be running, showing real-time Dublin bike station data and weather insights.
+
+---
