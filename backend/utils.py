@@ -29,3 +29,12 @@ def haversine(lat1, lon1, lat2, lon2):
     c = 2 * atan2(sqrt(a), sqrt(1 - a))
 
     return R * c  # Distance in kilometers
+
+def filter_nearby_stations(stations, lat, lon, max_distance_km):
+    """
+    Filters stations that are within `max_distance_km` from the provided latitude and longitude.
+    """
+    return [
+        station for station in stations
+        if haversine(lat, lon, station["lat"], station["lon"]) <= max_distance_km
+    ]
