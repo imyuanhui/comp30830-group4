@@ -16,7 +16,7 @@ const standMarkerColor = "#F7CE68"; // Marker color for stand availability
 const daySelect = document.getElementById("day-select"); // <select> dropdown for travel day
 const hourSelect = document.getElementById("hour-select"); // <select> dropdown for travel hour
 
-const BASE_URL = "http://34.242.107.125:8000"; // Backend API base URL
+const BASE_URL = "http://127.0.0.1:8000"; // Backend API base URL
 
 // ================= Initialization =================
 // Load the Google Maps API dynamically and initialize the map
@@ -27,6 +27,7 @@ function loadGoogleMapsAPI() {
       const script = document.createElement("script");
       script.src = `https://maps.googleapis.com/maps/api/js?key=${config.GOOGLE_MAPS_API_KEY}&libraries=places&callback=initMap`;
       script.async = true;
+      script.defer = true;
       document.head.appendChild(script);
     })
     .catch((error) =>
@@ -50,7 +51,25 @@ function initMap() {
   // Initialize autocomplete for journey planning inputs
   initAutocomplete("start-location");
   initAutocomplete("destination");
+  addMyLocationButton(map);
+
 }
+
+function addMyLocationButton(map) {
+  const controlDiv = document.createElement("div");
+
+  const button = document.createElement("button");
+  button.innerHTML = "📍 My Location";
+  button.classList.add("custom-map-control-button");
+
+  button.addEventListener("click", () => {
+    getMyLocation(map);
+  });
+
+  controlDiv.appendChild(button);
+  map.controls[google.maps.ControlPosition.TOP_CENTER].push(controlDiv);
+}
+
 
 // Get the user's current location and center the map on it
 function getMyLocation(map) {
@@ -69,7 +88,7 @@ function getMyLocation(map) {
         lng: longitude,
       };
 
-      showWeatherInfo("Your Location: ", latitude, longitude);
+      // showWeatherInfo("Your Location: ", latitude, longitude);
       map.setCenter(userLocation);
       map.setZoom(14);
       showUserLocation = true;
@@ -169,19 +188,13 @@ function attachStationClickListener(
 
     if (activeInfoWindow) activeInfoWindow.close();
 
-    fetch(
-      `${BASE_URL}/api/weather/current?lat=${station.lat}&lon=${station.lon}`
-    )
-      .then((response) => response.json())
-      .then((weather) => {
-        const icon_url = `http://openweathermap.org/img/w/${weather.weather[0].icon}.png`;
-        const temp = weather.temp;
-        const desp = weather.weather[0].description;
+    fetchWeatherData(station.lat, station.lon)
+      .then(({ iconUrl, temp, weatherDescription }) => {
         const content = `
           <div>
-            <img src="${icon_url}" alt="Weather icon" class="weather-icon" />
+            <img src="${iconUrl}" alt="Weather icon" class="weather-icon" />
             <h3>${station.name}</h3>
-            <p><strong>Weather:</strong> ${desp} ${temp}℃</p>
+            <p><strong>Weather:</strong> ${temp}℃ (${weatherDescription})</p>
             <p><strong>Available Bikes:</strong> ${
               station.details.available_bikes || 0
             }</p>
@@ -191,8 +204,12 @@ function attachStationClickListener(
             <p><strong>Last Update Time:</strong> ${
               station.details.last_update || "N/A"
             }</p>
-            <div id="chart_bike_${station.id}"></div>
-            <div id="chart_stand_${station.id}"></div>
+            <div id="chart_bike_${
+              station.id
+            }" style="width: 300px; height: 200px;"></div>
+            <div id="chart_stand_${
+              station.id
+            }" style="width: 300px; height: 200px;"></div>
           </div>
         `;
         infoWindow.setContent(content);
@@ -327,14 +344,13 @@ function setupTimeToggle() {
 // Populate the day dropdown with the next 7 days
 function setupDaySelector() {
   const now = new Date();
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < 5; i++) {
     const date = new Date(now);
     date.setDate(now.getDate() + i);
     // format: 2024-04-01 (Tue)
     const yyyyMMdd = date.toISOString().split("T")[0];
     const weekday = date.toLocaleDateString("en-IE", { weekday: "short" });
     const label = `${yyyyMMdd} (${weekday})`;
-
     const option = new Option(label, yyyyMMdd);
     if (i === 0) option.selected = true;
 
@@ -356,7 +372,6 @@ function updateHourOptions(selectedDateStr) {
 
   for (let h = 0; h < 24; h++) {
     if (isToday && h <= currentHour) continue;
-
     const timeStr = `${String(h).padStart(2, "0")}:00`;
     hourSelect.appendChild(new Option(timeStr, timeStr));
   }
@@ -490,56 +505,82 @@ function showJourneyResultPanel(
   destinationLocation,
   data
 ) {
-  const isFuture = document.getElementById("mode-future").checked;
+  
   let resultHtml;
+
   document.getElementById("journey-form-panel").style.display = "none";
   document.getElementById("journey-result-panel").style.display = "block";
   if (data.error) {
     resultHtml = `
       <p>🚫 No recommended bike stations found. Please try again.</p>
     `;
-  } else {
-    resultHtml = `
-    ${
-      isFuture
-        ? `
+    document.getElementById("results-content").innerHTML = resultHtml;
+    return;
+  } 
+
+  const isFuture = document.getElementById("mode-future").checked;
+  let predictionWarning='';
+  let predictionLabel='';
+  let startStationBikes = data.start_station.details.available_bikes;
+  let destStationStands = data.start_station.details.available_bike_stands;
+  let startStationIconUrl = `http://openweathermap.org/img/w/${data.start_station.prediction.icon}.png`;
+  let destLocationIconUrl = `http://openweathermap.org/img/w/${data.destination_station.prediction.icon}.png`;
+
+  if (isFuture) {
+    predictionWarning = `
       <div class="prediction-warning">
         Start and destination station availability is estimated from historical trends. Actual conditions may vary.
       </div>
-    `
-        : ""
-    }
-    <h3>🚲 Journey Plan Summary</h3>
+    `;
+    predictionLabel = "Predicted ";
+    startStationBikes = data.start_station.prediction.predicted_bike_availability;
+    destStationStands = data.destination_station.prediction.predicted_stand_availability;
+
+  } 
+    
+
+    resultHtml = `
+    ${predictionWarning}
+    <h4 class="section-title">🚲 Journey Plan Summary</h4>
+    <div class="info-card">
       <p><strong>From:</strong><br> ${startLocation.address}</p>
       <p><strong>To:</strong><br> ${destinationLocation.address}</p>
       <p><strong>Day & Time:</strong><br> ${day}, ${hour}</p>
+    </div>
 
-    <h4>📍 Start Station</h4>
-      <p><strong>Name:</strong> ${data.start_station.name}</p>
-      <p><strong>Available Bikes:</strong> ${
-        data.start_station.details.available_bikes
-      }</p>
-      <p><strong>Last Updated:</strong> ${
-        data.start_station.details.last_update
-      }</p>
+    <h4 class="section-title">📍 Start Station</h4>
+    <div class="station-info-box">
+      <div class="station-text">
+        <p><strong>Name:</strong><br> ${data.start_station.name}</p>
+        <p><strong>Weather:</strong><br> ${data.start_station.prediction.temp}℃ (${data.start_station.prediction.description})</p>
+        <p><strong>${predictionLabel}Available Bikes:<br></strong> ${startStationBikes}</p>
+      </div>
+      <div class="station-icon">
+        <img src="${startStationIconUrl}" alt="Weather icon" class="weather-icon" />
+      </div>
+    </div>
 
-    <h4>🏁 Destination Station</h4>
-      <p><strong>Name:</strong> ${data.destination_station.name}</p>
-      <p><strong>Available Stands:</strong> ${
-        data.destination_station.details.available_bike_stands
-      }</p>
-      <p><strong>Last Updated:</strong> ${
-        data.destination_station.details.last_update
-      }</p>
-
-      <div class="legend"></div>
+    <h4 class="section-title">🏁 Destination Station</h4>
+    <div class="station-info-box">
+      <div class="station-text">
+        <p><strong>Name:</strong><br>${data.destination_station.name}</p>
+        <p><strong>Weather:</strong><br> ${data.destination_station.prediction.temp}℃ (${data.destination_station.prediction.description})</p>
+        <p><strong>${predictionLabel}Available Stands:</strong><br> ${destStationStands}</p>
+      </div>
+      <div class="station-icon">
+        <img src="${destLocationIconUrl}" alt="Weather icon" class="weather-icon" />
+      </div>
+    </div>
+    
+    <div class="legend"></div>
   `;
-  }
+  
   showJourneyMarkers = true;
   document.getElementById("results-content").innerHTML = resultHtml;
   highlightJourneyStations(data.start_station.id, data.destination_station.id);
   updateLegend();
 }
+
 
 // Clear all journey markers from the map
 function clearJourneyLocationMarkers() {
@@ -560,25 +601,29 @@ function goBackToForm() {
 }
 
 // ================= Utilities =================
-// Fetch and display live weather info in the top bar
-function showWeatherInfo(location_name, lat, lon) {
-  const weatherInfo = document.getElementById("weather-info");
-  fetch(`${BASE_URL}/api/weather/current?lat=${lat}&lon=${lon}`)
+// Fetch weather for a certain time and location
+function fetchWeatherData(lat, lon) {
+  return fetch(`${BASE_URL}/api/weather/current?lat=${lat}&lon=${lon}`)
     .then((response) => response.json())
     .then((data) => {
-      if (!data) {
-        throw new Error(
-          "Invalid data format: Expected an object with a 'data' array"
-        );
+      if (!data || !data.weather || !data.weather[0]) {
+        throw new Error("Invalid weather data format");
       }
+      const iconUrl = `http://openweathermap.org/img/w/${data.weather[0].icon}.png`;
+      const temp = data.temp;
+      const weatherDescription = data.weather[0].description;
+      return { iconUrl, temp, weatherDescription };
+    });
+}
 
-      var iconUrl = `http://openweathermap.org/img/w/${data.weather[0].icon}.png`;
-      var temp = data.temp;
-      var weatherDescription = data.weather[0].description;
-
-      // Set the weather info inline in the top bar
-      weatherInfo.innerHTML = `${location_name}:<img src="${iconUrl}" alt="Weather Icon" style="width: 25px; vertical-align: middle; margin-left: 10px;"> 
-         <span style="font-weight: bold; color: #aee0ed; margin-left: 5px;">${temp}°C (${weatherDescription})</span>`;
+// Display live weather info in the top bar
+function showWeatherInfo(locationName, lat, lon) {
+  const weatherInfo = document.getElementById("weather-info");
+  fetchWeatherData(lat, lon)
+    .then(({ iconUrl, temp, weatherDescription }) => {
+      weatherInfo.innerHTML = `${locationName}:
+        <img src="${iconUrl}" alt="Weather Icon" style="width: 25px; vertical-align: middle; margin-left: 10px;"> 
+        <span style="font-weight: bold; color: #aee0ed; margin-left: 5px;">${temp}°C (${weatherDescription})</span>`;
     })
     .catch((error) => {
       console.error("Error fetching weather data:", error);
@@ -667,19 +712,12 @@ function updateLegend() {
 }
 
 // ================= App Entry & Bootstrapping =================
-// Run initMap() after Google Maps script is loaded
-window.onload = function () {
-  if (typeof google !== "undefined") {
-    initMap();
-  }
-};
-
 // Set up app components after DOM content is loaded
 document.addEventListener("DOMContentLoaded", () => {
   loadGoogleMapsAPI();
   setupModeToggle();
   // Use Dublin center as default weather
-  showWeatherInfo("Dublin City Center", 53.3498, -6.2603);
+  // showWeatherInfo("Dublin City Center", 53.3498, -6.2603);
   setupDaySelector();
   setupTimeToggle();
   setNowAsDefaultTime();
