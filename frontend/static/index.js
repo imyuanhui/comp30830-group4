@@ -427,8 +427,27 @@ function planJourney() {
   const hour = hourSelect.value;
   const isNow = document.getElementById("mode-now").checked;
 
-  if (!startLocation || !destinationLocation) {
-    alert("Please select valid start and destination locations.");
+  if (!startLocation) {
+    alert("Please select a valid start location.");
+    return;
+  }
+
+  if (!destinationLocation) {
+    alert("Please select a valid destination location.");
+    return;
+  }
+
+  if (!isWithinDublin(startLocation.lat, startLocation.lon)) {
+    alert(
+      "The start location is outside Dublin. Please enter a valid start location."
+    );
+    return;
+  }
+
+  if (!isWithinDublin(destinationLocation.lat, destinationLocation.lon)) {
+    alert(
+      "The destination is outside Dublin. Please enter a valid start location."
+    );
     return;
   }
 
@@ -705,6 +724,17 @@ function updateLegend() {
   for (const legend of legends) {
     legend.innerHTML = content;
   }
+}
+
+// Validate if the latitude and longitude are within the range of Dublin
+function isWithinDublin(lat, lon) {
+  // Approximate bounding box for Dublin city
+  const minLat = 53.2;
+  const maxLat = 53.42;
+  const minLon = -6.45;
+  const maxLon = -6.05;
+
+  return lat >= minLat && lat <= maxLat && lon >= minLon && lon <= maxLon;
 }
 
 // ================= App Entry & Bootstrapping =================
