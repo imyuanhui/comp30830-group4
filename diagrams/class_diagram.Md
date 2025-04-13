@@ -1,25 +1,27 @@
 ```mermaid
 classDiagram
-direction TB
-class Station {
-+id: int
-+name: str
-+address: str
-+lat: float
-+lon: float
-+available_bikes: int
-+available_stands: int
-+status: str
-+get_real_time_status()
-+get_historical_data()
-+is_available(min_bikes, min_stands)
-+distance_to(lat, lon)
+    direction TB
+    class Station {
+    +id: int
+    +name: str
+    +address: str
+    +lat: float
+    +lon: float
+    +available_bikes: int
+    +available_stands: int
+    +status: str
+    +get_real_time_status()
+    +get_historical_data()
+    +is_available(min_bikes, min_stands)
+    +distance_to(lat, lon)
 }
 
     class Weather {
         +temperature: float
         +description: str
         +icon: str
+        +lat: float
+        +lon: float
         +timestamp: datetime
         +get_current_weather(lat, lon)
         +get_weather_by_time(lat, lon, timestamp)
@@ -55,7 +57,7 @@ class Station {
 
     DublinBikesApp --> StationManager : uses
     DublinBikesApp --> Weather : uses
-    DublinBikesApp --> Predictor : uses
+    DublinBikesApp --> Predictor : loads
     DublinBikesApp --> JourneyPlanner : uses
     StationManager --> Station : manages
     JourneyPlanner --> StationManager : uses
