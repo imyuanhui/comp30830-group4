@@ -2,16 +2,25 @@ from db_helper import DBHelper
 import os
 import pandas as pd
 
+
 class DBSetUp:
     def __init__(self):
+        """
+        Initializes the DBSetUp class with a database helper instance.
+        """
         self.dh = DBHelper()
 
     def create_bike_database(self):
-        # Create a database for bike-related data
+        """
+        Creates the bike database to store station and availability data.
+        """
         # https://developer.jcdecaux.com/#/opendata/vls?page=dynamic
         self.dh.create_database(db_name="bike")
 
     def create_bike_station(self):
+        """
+        Creates the bike.station table to store static bike station information like name and location.
+        """
         sql = """
             CREATE TABLE bike.station (
                 id INTEGER NOT NULL COMMENT 'Station ID (Dublin)',
@@ -25,6 +34,9 @@ class DBSetUp:
         self.dh.create_table(sql=sql, table_name="bike.station")
 
     def create_bike_availability(self):
+        """
+        Creates the bike.availability table to store real-time availability of bikes and stands.
+        """
         sql = """
         CREATE TABLE bike.availability (
             station_id INTEGER NOT NULL COMMENT 'Station ID (Dublin)',
@@ -39,11 +51,16 @@ class DBSetUp:
         self.dh.create_table(sql=sql, table_name="bike.availability")
 
     def create_weather_schema(self):
-        # Create a database for weather-related data
+        """
+        Creates the weather database to store weather-related data.
+        """
         # https://openweathermap.org/api/one-call-3
         self.dh.create_database(db_name="weather")
 
     def create_weather_current_date(self):
+        """
+        Creates the weather.current_data table for current weather conditions at each station.
+        """
         sql = """
         CREATE TABLE weather.current_data (
             station_id INTEGER NOT NULL COMMENT 'Station ID (Dublin)',
@@ -70,6 +87,9 @@ class DBSetUp:
         self.dh.create_table(sql=sql, table_name="weather.current_data")
 
     def create_weather_daily_forecast(self):
+        """
+        Creates the weather.daily_forecast table for storing daily weather forecast data.
+        """
         sql = """
         CREATE TABLE weather.daily_forecast (
             station_id INTEGER NOT NULL COMMENT 'Station ID (Dublin)',
@@ -101,6 +121,9 @@ class DBSetUp:
         self.dh.create_table(sql=sql, table_name="weather.daily_forecast")
 
     def create_weather_hourly_forecast(self):
+        """
+        Creates the weather.hourly_forecast table for storing hourly weather forecast data.
+        """
         sql = """
         CREATE TABLE weather.hourly_forecast (
             station_id INTEGER NOT NULL COMMENT 'Station ID (Dublin)',
@@ -126,6 +149,9 @@ class DBSetUp:
         self.dh.create_table(sql=sql, table_name="weather.hourly_forecast")
 
     def create_weather_weather_condition(self):
+        """
+        Creates the weather.weather_condition table for storing weather condition code descriptions.
+        """
         # https://openweathermap.org/weather-conditions#Weather-Condition-Codes-2
         sql = """
         CREATE TABLE weather.weather_condition (
@@ -139,14 +165,18 @@ class DBSetUp:
         self.dh.create_table(sql=sql, table_name="weather.weather_condition")
 
     def load_demo_availability_data(self):
-        """Load demo availability data from CSV into the database."""
+        """
+        Loads sample bike availability data from a CSV file into the database.
+        """
         base_dir = os.path.dirname(__file__)
         file_path = os.path.join(base_dir, "availability_demo.csv")
         df = pd.read_csv(file_path, sep=';')
         self.dh.save_df_data(df=df, db_name="bike", table_name="availability")
 
-        
     def run(self):
+        """
+        Executes all the setup functions to initialize databases, tables, and load demo data.
+        """
         self.create_bike_database()
         self.create_bike_station()
         self.create_bike_availability()

@@ -12,10 +12,9 @@ class WeatherScraper:
     It stores the raw API response in local files and saves processed data into
     the database for both current and forecast weather conditions.
     """
-    
+
     def __init__(self):
         """Initializes the WeatherScraper with API configuration and database helper."""
-        
         # Load weather API configuration
         weather_config = Config().get_weather_config()
         self.weather_api_key = weather_config.weather_api_key
@@ -24,7 +23,6 @@ class WeatherScraper:
 
     def create_weather_data_folder(self):
         """Creates a folder for storing weather data."""
-
         if not os.path.exists('weather_data'):
             os.mkdir('weather_data')
             print("Folder 'weather_data' created!")
@@ -41,6 +39,10 @@ class WeatherScraper:
             file.write(response.text)
 
     def modify_col_types(self, df):
+        """
+        Preprocesses weather data to normalize nested fields and convert timestamps.
+        Also extracts useful fields from the 'weather' column.
+        """
         if 'sunrise' in df.columns:
             df['sunrise'] = pd.to_datetime(df['sunrise'], unit='s')
             df['sunset'] = pd.to_datetime(df['sunset'], unit='s')
@@ -49,8 +51,9 @@ class WeatherScraper:
         return df
 
     def write_to_db_current(self, station_id, lat, lng, weather_data):
-        """Processes and writes weather data into the database."""
-
+        """
+        Parses and stores the current weather data in the database table `weather.current_data`.
+        """
         current_df = pd.json_normalize(weather_data['current'])
         current_df = self.modify_col_types(current_df)
         current_df['station_id'] = station_id
@@ -67,7 +70,9 @@ class WeatherScraper:
         self.dh.save_df_data(df=current_df, db_name="weather", table_name="current_data")
 
     def write_to_db_forecast(self, station_id, lat, lng, weather_data):
-        """Processes and writes weather data into the database."""
+        """
+        Parses and stores hourly and daily forecast weather data into the database.
+        """
 
         hourly_forecast = pd.json_normalize(weather_data['hourly'])
         hourly_forecast = self.modify_col_types(hourly_forecast)
@@ -104,6 +109,9 @@ class WeatherScraper:
         self.dh.save_df_data(df=daily_forecast, db_name="weather", table_name="daily_forecast")
 
     def get_station_location(self):
+        """
+        Retrieves the list of station IDs along with their latitude and longitude from the bike.station table.
+        """
         sql = """
             SELECT
                 s.id
@@ -114,8 +122,10 @@ class WeatherScraper:
         self.station_df = self.dh.query_data(sql)
 
     def fetch_station_weather(self):
-        """Fetches weather data for each station and stores it in a file and database."""
-
+        """
+        For each station, fetches current and forecast weather data using OpenWeatherMap API.
+        Stores raw response as file and inserts processed data into the database.
+        """
         self.create_weather_data_folder()
         # Iterate over each row in the DataFrame
         for index, row in self.station_df.iterrows():
@@ -137,5 +147,8 @@ class WeatherScraper:
             self.write_to_db_forecast(station_id, lat, lng, weather_data)
 
     def run(self):
+        """
+        Executes the full scraping process: loads station list and fetches weather data.
+        """
         self.get_station_location()
         self.fetch_station_weather()

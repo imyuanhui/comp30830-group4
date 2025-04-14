@@ -4,6 +4,9 @@ from dotenv import load_dotenv
 
 class Config:
     def __init__(self):
+        """
+        Initializes and validates configurations for weather, bike API, and database.
+        """
         load_dotenv()
         # Access individual values
         self.weather_config = WeatherConfig()
@@ -14,12 +17,30 @@ class Config:
         self.db_config.validate()
 
     def get_weather_config(self):
+        """
+        Returns the loaded weather configuration object.
+
+        Returns:
+            WeatherConfig: The configuration object containing the weather API key.
+        """
         return self.weather_config
 
     def get_bike_config(self):
+        """
+        Returns the loaded bike API configuration object.
+
+        Returns:
+            BikeConfig: The configuration object containing bike API key and station URI.
+        """
         return self.bike_config
 
     def get_db_config(self):
+        """
+        Returns the loaded database configuration object.
+
+        Returns:
+            DBConfig: The configuration object containing DB credentials and URI.
+        """
         return self.db_config
 
 
@@ -29,7 +50,12 @@ class WeatherConfig:
         self.weather_api_key = os.getenv("WEATHER_API_KEY")
 
     def validate(self):
-        """Check if the API key exists and is valid."""
+        """
+        Validates the presence of the weather API key.
+
+        Raises:
+            ValueError: If WEATHER_API_KEY is missing from the environment variables.
+        """
         if not self.weather_api_key:
             raise ValueError("ERROR: No WEATHER_API_KEY found in .env.")
 
@@ -42,7 +68,12 @@ class BikeConfig:
         self.stations_uri = os.getenv("BIKE_STATIONS_URL")
 
     def validate(self):
-        """Check if all required environment variables are set."""
+        """
+        Validates the presence of required bike API configuration variables.
+
+        Raises:
+            ValueError: If any of the BIKE_API_KEY, BIKE_NAME, or BIKE_STATIONS_URL variables are missing.
+        """
         missing_keys = []
 
         if not self.bike_api_key:
@@ -65,6 +96,12 @@ class DBConfig:
         self.uri = os.getenv("DB_URI")
 
     def validate(self):
+        """
+        Validates the presence of required database configuration variables.
+
+        Raises:
+            ValueError: If any of the DB_USER, DB_PASSWORD, DB_PORT, DB_NAME, or DB_URI variables are missing.
+        """
         missing_keys = []
         if not self.user:
             missing_keys.append("DB_USER")
